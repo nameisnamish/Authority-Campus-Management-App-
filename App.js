@@ -25,6 +25,7 @@ import TeacherProfilePage from './src/screens/TeacherProfilePage';
 import StudentProfilePage from './src/screens/StudentProfilePage';
 import TeacherAiAssistant from './src/screens/TeacherAiAssistant';
 import TeacherAnalyticsDashboardPage from './src/screens/TeacherAnalyticsDashboardPage';
+import StudentAnalyticsDashboard from './src/screens/StudentAnalyticsDashboard';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,7 +59,7 @@ function StudentTabs() {
       <Tab.Screen name="Home" component={StudentDashboardPage} />
       <Tab.Screen name="Schedule" component={PlaceholderScreen} />
       <Tab.Screen name="AI" component={TeacherAiAssistant} />
-      <Tab.Screen name="Analytics" component={PlaceholderScreen} />
+      <Tab.Screen name="Analytics" component={StudentAnalyticsDashboard} />
     </Tab.Navigator>
   );
 }

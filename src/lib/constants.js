@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://847e-2401-4900-88cc-f5e1-7477-43c8-7fcd-398f.ngrok-free.app';
+export const BASE_URL = 'https://fc3e-112-133-228-52.ngrok-free.app';
 
 export const Teacher_dashboard_API_ROUTES = {
     TEACHER_DASHBOARD: `${BASE_URL}/api/teacher/dashboard`,
@@ -65,4 +65,4 @@ export const AI_API_ROUTES = {
     AI_CHAT: `${BASE_URL}/api/ai`,
 };
 
-
+

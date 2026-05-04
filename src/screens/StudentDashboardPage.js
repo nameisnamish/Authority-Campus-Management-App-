@@ -319,6 +319,33 @@ export default function StudentDashboardPage({ navigation }) {
         </Animated.View>
 
         <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }] }}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>My Subjects</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.subjectsScrollContent}
+          >
+            {['CS601', 'CS602', 'HU601', 'CS603'].map((code, idx) => (
+              <TouchableOpacity 
+                key={code} 
+                style={[styles.subjectMiniCard, { borderLeftColor: idx % 2 === 0 ? colors.primaryGreen : colors.primaryPeach }]}
+                onPress={() => navigation.navigate('Analytics')}
+              >
+                <Text style={styles.subjectMiniCode}>{code}</Text>
+                <Text style={styles.subjectMiniName}>{code === 'CS601' ? 'Data Science' : code === 'CS602' ? 'ML' : 'Ethics'}</Text>
+                <View style={styles.subjectMiniGrade}>
+                  <Text style={styles.subjectMiniGradeText}>{idx === 0 ? 'A+' : 'A'}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
           <Text style={styles.sectionTitle}>Upcoming Classes</Text>
 
           {upcomingClasses.length > 0 ? (
@@ -700,6 +727,54 @@ const styles = StyleSheet.create({
   },
   swipeArrow: {
     marginLeft: 'auto',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  viewAllText: {
+    color: colors.primaryGreen,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  subjectsScrollContent: {
+    paddingBottom: 20,
+    gap: 12,
+  },
+  subjectMiniCard: {
+    backgroundColor: colors.surface,
+    width: 120,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+  },
+  subjectMiniCode: {
+    color: colors.textGrey,
+    fontSize: 10,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  subjectMiniName: {
+    color: colors.textWhite,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  subjectMiniGrade: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  subjectMiniGradeText: {
+    color: colors.primaryGreen,
+    fontSize: 12,
+    fontWeight: '800',
   },
   sectionTitle: {
     color: colors.textWhite,

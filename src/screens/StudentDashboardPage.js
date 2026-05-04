@@ -319,6 +319,54 @@ export default function StudentDashboardPage({ navigation }) {
         </Animated.View>
 
         <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }] }}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>My Subjects</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.subjectsScrollContent}
+            decelerationRate="fast"
+            snapToInterval={172} // card width (160) + gap (12)
+          >
+            {[
+              { code: 'CS601', name: 'Data Science', attendance: '94%', grade: 'A+', icon: 'bar-chart', color: colors.primaryGreen },
+              { code: 'CS602', name: 'Machine Learning', attendance: '88%', grade: 'A', icon: 'bulb', color: colors.primaryPeach },
+              { code: 'HU601', name: 'Digital Ethics', attendance: '92%', grade: 'B+', icon: 'shield-checkmark', color: '#FFE169' },
+              { code: 'CS603', name: 'Cloud Computing', attendance: '85%', grade: 'A', icon: 'cloud', color: '#8DE0A6' },
+            ].map((subject, idx) => (
+              <TouchableOpacity 
+                key={subject.code} 
+                style={styles.subjectCardModern}
+                onPress={() => navigation.navigate('Analytics')}
+                activeOpacity={0.9}
+              >
+                <View style={[styles.subjectCardTop, { backgroundColor: subject.color + '20' }]}>
+                  <Ionicons name={subject.icon} size={20} color={subject.color} />
+                  <View style={[styles.gradeBadgeSmall, { backgroundColor: subject.color }]}>
+                    <Text style={styles.gradeBadgeTextSmall}>{subject.grade}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.subjectCardBody}>
+                  <Text style={styles.subjectCardCode}>{subject.code}</Text>
+                  <Text style={styles.subjectCardName} numberOfLines={1}>{subject.name}</Text>
+                  
+                  <View style={styles.attendanceMiniRow}>
+                    <View style={styles.attendanceBarBg}>
+                      <View style={[styles.attendanceBarFill, { width: subject.attendance, backgroundColor: subject.color }]} />
+                    </View>
+                    <Text style={styles.attendanceMiniText}>{subject.attendance}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
           <Text style={styles.sectionTitle}>Upcoming Classes</Text>
 
           {upcomingClasses.length > 0 ? (
@@ -701,10 +749,86 @@ const styles = StyleSheet.create({
   swipeArrow: {
     marginLeft: 'auto',
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  viewAllText: {
+    color: colors.primaryGreen,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  subjectsScrollContent: {
+    paddingBottom: 24,
+    gap: 12,
+  },
+  subjectCardModern: {
+    backgroundColor: colors.surface,
+    width: 160,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  subjectCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  gradeBadgeSmall: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  gradeBadgeTextSmall: {
+    color: colors.darkOverlay,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  subjectCardBody: {
+    padding: 12,
+  },
+  subjectCardCode: {
+    color: colors.textGrey,
+    fontSize: 10,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  subjectCardName: {
+    color: colors.textWhite,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  attendanceMiniRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  attendanceBarBg: {
+    flex: 1,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 2,
+  },
+  attendanceBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  attendanceMiniText: {
+    color: colors.textGrey,
+    fontSize: 10,
+    fontWeight: '700',
+  },
   sectionTitle: {
     color: colors.textWhite,
-    fontSize: typography.h4,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     marginBottom: 16,
   },
   upcomingCard: {

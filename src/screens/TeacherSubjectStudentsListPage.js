@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Image, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '../theme';
+import Notification from '../components/Notification';
 import { useCache } from '../hooks/useCache';
 import { Class_Enrollment_API_ROUTES, BASE_URL } from '../lib/constants';
 import { getAccessToken } from '../utils/tokenStorage';
@@ -13,6 +14,7 @@ export default function TeacherSubjectStudentsListPage({ route, navigation }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   
   const { getCachedData, setCachedData } = useCache();
 
@@ -170,6 +172,9 @@ export default function TeacherSubjectStudentsListPage({ route, navigation }) {
           <Ionicons name="arrow-back" size={26} color={colors.primaryGreen} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={2}>{title}</Text>
+        <TouchableOpacity style={styles.bellButton} onPress={() => setNotificationVisible(true)}>
+          <Ionicons name="notifications-outline" size={26} color={colors.primaryGreen} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -225,7 +230,7 @@ export default function TeacherSubjectStudentsListPage({ route, navigation }) {
         />
       )}
 
-
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -252,6 +257,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     lineHeight: 30,
+  },
+  bellButton: {
+    padding: 4,
   },
   searchContainer: {
     flexDirection: 'row',

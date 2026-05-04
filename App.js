@@ -26,6 +26,9 @@ import StudentProfilePage from './src/screens/StudentProfilePage';
 import TeacherAiAssistant from './src/screens/TeacherAiAssistant';
 import TeacherAnalyticsDashboardPage from './src/screens/TeacherAnalyticsDashboardPage';
 import StudentAnalyticsDashboard from './src/screens/StudentAnalyticsDashboard';
+import StudentSchedulePage from './src/screens/StudnetSchedulePage';
+import StudentSyllabusLearningPathPage from './src/screens/StudentSyllabusLearningPathPage';
+import TeacherSyllabusTestManager from './src/screens/TeacherSyllabusTestManager';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -57,7 +60,7 @@ function StudentTabs() {
       })}
     >
       <Tab.Screen name="Home" component={StudentDashboardPage} />
-      <Tab.Screen name="Schedule" component={PlaceholderScreen} />
+      <Tab.Screen name="Schedule" component={StudentSchedulePage} />
       <Tab.Screen name="AI" component={TeacherAiAssistant} />
       <Tab.Screen name="Analytics" component={StudentAnalyticsDashboard} />
     </Tab.Navigator>
@@ -148,12 +151,14 @@ function RootNavigator() {
               <Stack.Screen name="StudentDashboardTabs" component={StudentTabs} />
               <Stack.Screen name="ClassroomScan" component={ClassroomScanPage} />
               <Stack.Screen name="StudentProfilePage" component={StudentProfilePage} options={{ animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="StudentSyllabusLearningPath" component={StudentSyllabusLearningPathPage} />
             </>
           ) : (
             <>
               <Stack.Screen name="TeacherDashboardTabs" component={TeacherTabs} />
               <Stack.Screen name="ClassroomScan" component={ClassroomScanPage} />
               <Stack.Screen name="TeacherSubjectStudentsListPage" component={TeacherSubjectStudentsListPage} />
+              <Stack.Screen name="TeacherSyllabusTestManager" component={TeacherSyllabusTestManager} />
               <Stack.Screen name="TeacherSubjectStudentAttendancePage" component={TeacherSubjectStudentAttendancePage} />
               <Stack.Screen name="TeacherProfilePage" component={TeacherProfilePage} options={{ animation: 'slide_from_bottom' }} />
             </>

@@ -8,6 +8,7 @@ import { useCache } from '../hooks/useCache';
 import { DATA_SCHEMAS } from '../lib/dataSchemas';
 import { normalizeTodayScheduleData } from '../utils/dataNormalizers';
 import { getAccessToken } from '../utils/tokenStorage';
+import Notification from '../components/Notification';
 
 export default function TeacherDashboardPage({ navigation }) {
   // Cache hook
@@ -19,6 +20,7 @@ export default function TeacherDashboardPage({ navigation }) {
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' or 'completed'
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
 
   // Animation Values
   const headerFade = useRef(new Animated.Value(0)).current;
@@ -262,10 +264,15 @@ export default function TeacherDashboardPage({ navigation }) {
               <Text style={styles.subGreeting}>{dashboardData?.profile?.department}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('TeacherProfilePage')} activeOpacity={0.85}>
-            <Ionicons name="person-circle" size={48} color={colors.primaryPeach} />
-            <View style={styles.statusDot} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity onPress={() => setNotificationVisible(true)}>
+              <Ionicons name="notifications-outline" size={28} color={colors.textWhite} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('TeacherProfilePage')} activeOpacity={0.85}>
+              <Ionicons name="person-circle" size={48} color={colors.primaryPeach} />
+              <View style={styles.statusDot} />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
 
         <Animated.View style={{ opacity: headerFade, transform: [{ translateY: headerSlide }] }}>
@@ -445,6 +452,7 @@ export default function TeacherDashboardPage({ navigation }) {
 
       </ScrollView>
 
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
+import Notification from '../components/Notification';
 import { useCache } from '../hooks/useCache';
 import { Student_Attendance_Report_API_ROUTES, AttendanceStatus_Update_API_ROUTES, BASE_URL } from '../lib/constants';
 import { generateCalendarWeeks, getMonthName, formatDate, getDayName } from '../utils/calendarHelper';
@@ -16,6 +17,7 @@ export default function TeacherSubjectStudentAttendancePage({ route, navigation 
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   
   const { getCachedData, setCachedData } = useCache();
 
@@ -303,6 +305,9 @@ export default function TeacherSubjectStudentAttendancePage({ route, navigation 
         <Text style={styles.headerTitleBase}>
           {studentName} – <Text style={styles.headerTitleGreen}>Attendance</Text>
         </Text>
+        <TouchableOpacity onPress={() => setNotificationVisible(true)} style={styles.bellButton}>
+          <Ionicons name="notifications-outline" size={26} color={colors.primaryGreen} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -470,7 +475,7 @@ export default function TeacherSubjectStudentAttendancePage({ route, navigation 
         
       </ScrollView>
       
-
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -487,6 +492,9 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
     backgroundColor: '#0a0a0a'
+  },
+  bellButton: {
+    padding: 4,
   },
   backButton: {
     marginRight: 16,

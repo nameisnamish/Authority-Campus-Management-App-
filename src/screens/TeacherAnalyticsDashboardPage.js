@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle, Rect, Line, Text as SvgText } from 'react-native-svg';
 import { colors } from '../theme';
+import Notification from '../components/Notification';
 
 const { width } = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ const subjects = ['Overall', 'Mathematics', 'Physics', 'Chemistry', 'English'];
 
 export default function TeacherAnalyticsDashboardPage() {
   const [activeTab, setActiveTab] = useState('ATTENDANCE');
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [timeType, setTimeType] = useState('WEEKS'); // 'WEEKS' or 'MONTHS'
   const [timeCount, setTimeCount] = useState(8); // Number of weeks or months
@@ -98,8 +100,8 @@ export default function TeacherAnalyticsDashboardPage() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Analytics Dashboard</Text>
-        <TouchableOpacity style={styles.bellIcon}>
-          <Ionicons name="notifications" size={24} color={colors.textGrey} />
+        <TouchableOpacity style={styles.bellIcon} onPress={() => setNotificationVisible(true)}>
+          <Ionicons name="notifications-outline" size={24} color={colors.textGrey} />
         </TouchableOpacity>
       </View>
 
@@ -363,6 +365,8 @@ export default function TeacherAnalyticsDashboardPage() {
           ))}
         </View>
       </ScrollView>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

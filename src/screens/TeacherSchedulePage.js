@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import Notification from '../components/Notification';
 import { Teacher_schedule_API_ROUTES } from '../lib/constants';
 import { useCache } from '../hooks/useCache';
 import { DATA_SCHEMAS } from '../lib/dataSchemas';
@@ -179,6 +180,7 @@ export default function TeacherSchedulePage({ navigation }) {
   const [weeklySchedule, setWeeklySchedule] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
 
   const calculateDynamicStats = () => {
     let totalClasses = 0;
@@ -317,7 +319,7 @@ export default function TeacherSchedulePage({ navigation }) {
     });
 
     return (
-      <TouchableOpacity key={classItem.id} style={styles.classCard} onPress={() => navigation.navigate('TeacherSubjectStudentsListPage', { subject: classItem })}>
+      <TouchableOpacity key={classItem.id} style={styles.classCard} onPress={() => navigation.navigate('TeacherSyllabusTestManager', { subject: classItem })}>
         {renderTopBadge(classItem)}
         <View style={styles.cardTopSection}>
           <View style={styles.tagAndTitle}>
@@ -469,7 +471,7 @@ export default function TeacherSchedulePage({ navigation }) {
             <Text style={styles.headerTitle}>Classes</Text>
             <Text style={styles.semesterInfo}>Academic Year 2026 • Term 2</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton} onPress={fetchScheduleData}>
+          <TouchableOpacity style={styles.notificationButton} onPress={() => setNotificationVisible(true)}>
             <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
             <View style={styles.notificationDot} />
           </TouchableOpacity>
@@ -550,6 +552,8 @@ export default function TeacherSchedulePage({ navigation }) {
           </View>
         )}
       </ScrollView>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

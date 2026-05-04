@@ -5,11 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, LinearGradient, Stop, Defs } from 'react-native-svg';
 
 import { colors, typography } from '../theme';
+import Notification from '../components/Notification';
 
 const { width } = Dimensions.get('window');
 
 const StudentAnalyticsDashboard = ({ navigation }) => {
   const [activeSemester, setActiveSemester] = useState('Semester 6');
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   
   const fadeAnim = new Animated.Value(0);
   const slideAnim = new Animated.Value(20);
@@ -113,9 +115,14 @@ const StudentAnalyticsDashboard = ({ navigation }) => {
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Analytics Dashboard</Text>
         </View>
-        <TouchableOpacity>
-          <Ionicons name="ellipsis-vertical" size={24} color={colors.textWhite} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <TouchableOpacity onPress={() => setNotificationVisible(true)}>
+            <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Ionicons name="ellipsis-vertical" size={24} color={colors.textWhite} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -268,6 +275,8 @@ const StudentAnalyticsDashboard = ({ navigation }) => {
           </View>
         </Animated.View>
       </ScrollView>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 };

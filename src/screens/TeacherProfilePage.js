@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '../theme';
+import Notification from '../components/Notification';
 import { useAuth } from '../hooks/useAuth';
 import { useCache } from '../hooks/useCache';
 import { Teacher_profile_API_ROUTES } from '../lib/constants';
@@ -40,6 +41,7 @@ export default function TeacherProfilePage({ navigation }) {
   const [tempLocation, setTempLocation] = useState('');
   const [tempCabin, setTempCabin] = useState('');
   const [tempOfficeHours, setTempOfficeHours] = useState('');
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
 
   // Fetch teacher profile data
   useEffect(() => {
@@ -213,7 +215,9 @@ export default function TeacherProfilePage({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={colors.textWhite} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Academic Identity</Text>
-          <Text style={styles.headerCollege}>{profileData.college || 'University'}</Text>
+          <TouchableOpacity onPress={() => setNotificationVisible(true)}>
+            <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
+          </TouchableOpacity>
         </View>
 
         {/* Profile Avatar & Info */}
@@ -509,6 +513,8 @@ export default function TeacherProfilePage({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

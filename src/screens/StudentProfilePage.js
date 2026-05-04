@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Modal, Ale
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import Notification from '../components/Notification';
 import { useAuth } from '../hooks/useAuth';
 import LibraryQRScanner from '../components/LibraryQRScanner';
 import LibraryCheckInModal from '../components/LibraryCheckInModal';
@@ -16,6 +17,7 @@ export default function StudentProfilePage({ navigation }) {
   const [libraryCheckInModalVisible, setLibraryCheckInModalVisible] = useState(false);
   const [faceEnrollmentVisible, setFaceEnrollmentVisible] = useState(false);
   const [scannedQRSecret, setScannedQRSecret] = useState(null);
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
 
   // Mock student data - in a real app, this would come from a context or API
   const student = {
@@ -80,7 +82,9 @@ export default function StudentProfilePage({ navigation }) {
           <Ionicons name="arrow-back" size={28} color={colors.textWhite} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Academic Identity</Text>
-        <Text style={styles.headerCollege}>RV University</Text>
+        <TouchableOpacity onPress={() => setNotificationVisible(true)}>
+          <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -233,6 +237,8 @@ export default function StudentProfilePage({ navigation }) {
         visible={faceEnrollmentVisible}
         onClose={() => setFaceEnrollmentVisible(false)}
       />
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

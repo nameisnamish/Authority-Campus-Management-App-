@@ -18,6 +18,7 @@ import { useCache } from '../hooks/useCache';
 import { DATA_SCHEMAS } from '../lib/dataSchemas';
 import { AI_API_ROUTES } from '../lib/constants';
 import { getAccessToken } from '../utils/tokenStorage';
+import Notification from '../components/Notification';
 
 
 const QUICK_ACTIONS = [
@@ -68,6 +69,7 @@ const MessageBubble = ({ message }) => {
 
 // ─── Main Screen ───────────────────────────────────────────────────────────
 export default function TeacherAiAssistant() {
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -202,7 +204,7 @@ export default function TeacherAiAssistant() {
               </View>
               <Text style={styles.headerSubtitle}>Your academic assistant</Text>
             </View>
-            <TouchableOpacity style={styles.notificationButton}>
+            <TouchableOpacity style={styles.notificationButton} onPress={() => setNotificationVisible(true)}>
               <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
               <View style={styles.notificationDot} />
             </TouchableOpacity>
@@ -307,6 +309,8 @@ export default function TeacherAiAssistant() {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }

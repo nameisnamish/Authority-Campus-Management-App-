@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { Student_dashboard_API_ROUTES } from '../lib/constants';
 import { getAccessToken } from '../utils/tokenStorage';
+import Notification from '../components/Notification';
 
 export default function StudentDashboardPage({ navigation }) {
   const { logout, isLoading, user } = useAuth();
@@ -18,6 +19,7 @@ export default function StudentDashboardPage({ navigation }) {
   const [liveClass, setLiveClass] = useState(null);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [completedClasses, setCompletedClasses] = useState([]);
+  const [isNotificationVisible, setNotificationVisible] = useState(false);
   
   // Animation Values
   const headerFade = useRef(new Animated.Value(0)).current;
@@ -215,14 +217,19 @@ export default function StudentDashboardPage({ navigation }) {
             <Text style={styles.greeting}>Hello, {dashboardData?.student?.name?.split(' ')[0] || 'Student'}</Text>
             <Text style={styles.subGreeting}>{dashboardData?.student?.institution} • {dashboardData?.student?.program}</Text>
           </View>
-          <TouchableOpacity 
-            style={styles.avatarContainer}
-            onPress={() => navigation.navigate('StudentProfilePage')}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="person-circle" size={48} color={colors.primaryPeach} />
-            <View style={styles.statusDot} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity onPress={() => setNotificationVisible(true)}>
+              <Ionicons name="notifications-outline" size={28} color={colors.textWhite} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.avatarContainer}
+              onPress={() => navigation.navigate('StudentProfilePage')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-circle" size={48} color={colors.primaryPeach} />
+              <View style={styles.statusDot} />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
 
         <Animated.View style={{ opacity: headerFade, transform: [{ translateY: headerSlide }] }}>
@@ -301,10 +308,15 @@ export default function StudentDashboardPage({ navigation }) {
                 <Text style={styles.statBadgeTextDark}>{dashboardData?.overallAttendance?.missed} Missed</Text>
               </View>
 
-              <TouchableOpacity style={styles.swipeButton}>
-                <Ionicons name="qr-code-outline" size={24} color={colors.textWhite} style={styles.swipeIcon} />
-                <Text style={styles.swipeText}>Swipe to view details</Text>
-                <Ionicons name="arrow-forward" size={20} color={colors.textWhite} style={styles.swipeArrow} />
+              <TouchableOpacity 
+                style={styles.viewDetailsButton}
+                onPress={() => navigation.navigate('StudentSyllabusLearningPath', { 
+                  subject: { title: liveClass.courseName, subjectCode: liveClass.tag },
+                  initialTab: 'attendance'
+                })}
+              >
+                <Text style={styles.viewDetailsText}>View Details</Text>
+                <Ionicons name="arrow-forward" size={20} color={colors.textWhite} style={styles.viewDetailsArrow} />
               </TouchableOpacity>
             </>
           ) : (
@@ -321,7 +333,7 @@ export default function StudentDashboardPage({ navigation }) {
         <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }] }}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>My Subjects</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Analytics')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Schedule')}>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
@@ -331,16 +343,22 @@ export default function StudentDashboardPage({ navigation }) {
             showsHorizontalScrollIndicator={false} 
             contentContainerStyle={styles.subjectsScrollContent}
           >
-            {['CS601', 'CS602', 'HU601', 'CS603'].map((code, idx) => (
+            {[
+              { id: '1', title: 'Data Structures & Algorithms', subjectCode: 'CS-301', tag: 'Batch B', sectionName: 'Section A' },
+              { id: '2', title: 'Operating Systems', subjectCode: 'CS-302', tag: 'Batch B', sectionName: 'Section A' },
+              { id: '3', title: 'Database Management', subjectCode: 'CS-303', tag: 'Batch B', sectionName: 'Section A' },
+              { id: '4', title: 'Computer Networks', subjectCode: 'CS-304', tag: 'Batch B', sectionName: 'Section A' },
+              { id: '5', title: 'Machine Learning', subjectCode: 'CS-401', tag: 'Batch B', sectionName: 'Section A' },
+            ].map((subject, idx) => (
               <TouchableOpacity 
-                key={code} 
+                key={subject.id} 
                 style={[styles.subjectMiniCard, { borderLeftColor: idx % 2 === 0 ? colors.primaryGreen : colors.primaryPeach }]}
-                onPress={() => navigation.navigate('Analytics')}
+                onPress={() => navigation.navigate('StudentSyllabusLearningPath', { subject })}
               >
-                <Text style={styles.subjectMiniCode}>{code}</Text>
-                <Text style={styles.subjectMiniName}>{code === 'CS601' ? 'Data Science' : code === 'CS602' ? 'ML' : 'Ethics'}</Text>
+                <Text style={styles.subjectMiniCode}>{subject.subjectCode}</Text>
+                <Text style={styles.subjectMiniName} numberOfLines={2}>{subject.title}</Text>
                 <View style={styles.subjectMiniGrade}>
-                  <Text style={styles.subjectMiniGradeText}>{idx === 0 ? 'A+' : 'A'}</Text>
+                  <Text style={styles.subjectMiniGradeText}>{idx === 0 ? 'A+' : (idx === 1 ? 'A' : 'B+')}</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -443,6 +461,8 @@ export default function StudentDashboardPage({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -703,30 +723,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  swipeButton: {
+  viewDetailsButton: {
     backgroundColor: colors.darkOverlay,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
-  swipeIcon: {
-    backgroundColor: colors.textWhite,
-    color: colors.darkOverlay,
-    padding: 6,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  swipeText: {
+  viewDetailsText: {
     color: colors.textWhite,
-    fontSize: typography.body2,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
+    fontSize: typography.body1,
+    fontWeight: '700',
+    marginRight: 8,
   },
-  swipeArrow: {
-    marginLeft: 'auto',
+  viewDetailsArrow: {
+    marginLeft: 4,
   },
   sectionHeaderRow: {
     flexDirection: 'row',

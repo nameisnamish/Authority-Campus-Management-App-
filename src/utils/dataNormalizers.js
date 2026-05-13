@@ -140,6 +140,113 @@ export const normalizeScheduleData = (apiResponse) => {
 };
 
 /**
+ * Normalize /api/student/profile response to standard format
+ * @param {object} apiResponse - Raw API response or student object
+ * @returns {object} - Normalized student profile data
+ */
+export const normalizeStudentProfileData = (apiResponse) => {
+  const data = apiResponse.data || apiResponse;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    usn: data.usn,
+    residenceStatus: data.residenceStatus || 'Day Scholar',
+    course: data.course || 'N/A',
+    email: data.email || 'N/A',
+    semester: data.semester ?? null, // null if not present — don't guess
+    academicYear: data.academicYear || '',
+    termType: data.termType || '',
+    avatar: data.avatar || null,
+    fetchedAt: Date.now()
+  };
+};
+
+/**
+ * Normalize /api/student/subjects response to standard format
+ * @param {object} apiResponse - Raw API response
+ * @returns {object} - Normalized subjects for a specific semester
+ */
+export const normalizeSemesterSubjectsData = (apiResponse) => {
+  if (!apiResponse?.data) return null;
+  const { data } = apiResponse;
+
+  return {
+    semester: data.semester,
+    totalSubjects: data.totalSubjects,
+    subjects: (data.subjects || []).map(sub => ({
+      enrollmentId: sub.subject_id, 
+      subject: {
+        subject_id: sub.subject_id,
+        subject_code: sub.subject_code,
+        subject_name: sub.subject_name,
+        subject_type: sub.subject_type || 'Core',
+        credits: sub.credits
+      },
+      // Mocking section/classroom for historical consistency in card layout
+      section: {
+        section_name: 'Academic Batch', 
+        classroom: { room_number: 'Archived', building_name: '' }
+      },
+      attendancePercentage: sub.attendancePercentage || 0,
+      teacher: { name: 'Faculty' } 
+    })),
+    fetchedAt: Date.now()
+  };
+};
+
+/**
+ * Normalize /api/student/schedule response to standard format
+ * Extracts enrolled subjects, weekly schedule and profile separately
+ * @param {object} apiResponse - Raw API response
+ * @returns {object} - Contains enrolledSubjects, weeklySchedule and studentProfile
+ */
+export const normalizeStudentScheduleData = (apiResponse) => {
+  if (!apiResponse?.data) {
+    console.warn('normalizeStudentScheduleData: Invalid response structure');
+    return null;
+  }
+
+  const { data } = apiResponse;
+
+  // Normalize enrolled subjects
+  const normalizedSubjects = (data.enrolledSubjects || []).map(enrollment => ({
+    enrollmentId: enrollment.enrollmentId,
+    subject: {
+      subject_id: enrollment.subject?.subject_id,
+      subject_code: enrollment.subject?.subject_code,
+      subject_name: enrollment.subject?.subject_name,
+      subject_type: enrollment.subject?.subject_type,
+      credits: enrollment.subject?.credits
+    },
+    section: {
+      section_id: enrollment.section?.section_id,
+      section_name: enrollment.section?.section_name,
+      classroom: {
+        room_number: enrollment.section?.classroom?.room_number,
+        building_name: enrollment.section?.classroom?.building_name
+      }
+    },
+    attendancePercentage: enrollment.attendancePercentage || 0,
+    teacher: {
+      name: enrollment.teacher?.name || 'Faculty'
+    }
+  }));
+
+  return {
+    enrolledSubjects: {
+      studentId: data.studentId,
+      totalCredits: data.totalCredits,
+      subjects: normalizedSubjects,
+      fetchedAt: Date.now()
+    },
+    weeklySchedule: data.weeklySchedule || {},
+    studentProfile: data.student ? normalizeStudentProfileData(data.student) : null
+  };
+};
+
+/**
  * Extract teacher name for quick display
  * Works with both dashboard profile snapshot and full profile
  * @param {object} data - Profile data (could be from dashboard or profile endpoint)

@@ -9,9 +9,13 @@ import LibraryQRScanner from '../components/LibraryQRScanner';
 import LibraryCheckInModal from '../components/LibraryCheckInModal';
 import FaceEnrollmentModal from '../components/FaceEnrollmentModal';
 import { validateLibraryQR } from '../utils/libraryQRValidator';
+import { useCache } from '../hooks/useCache';
+import { DATA_SCHEMAS } from '../lib/dataSchemas';
 
 export default function StudentProfilePage({ navigation }) {
   const { logout, isLoading } = useAuth();
+  const { getCachedData } = useCache();
+  
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [libraryQRScannerVisible, setLibraryQRScannerVisible] = useState(false);
   const [libraryCheckInModalVisible, setLibraryCheckInModalVisible] = useState(false);
@@ -19,14 +23,17 @@ export default function StudentProfilePage({ navigation }) {
   const [scannedQRSecret, setScannedQRSecret] = useState(null);
   const [isNotificationVisible, setNotificationVisible] = useState(false);
 
-  // Mock student data - in a real app, this would come from a context or API
-  const student = {
+  // Attempt to get student profile from cache
+  const cachedProfile = getCachedData(DATA_SCHEMAS.STUDENT_PROFILE.cacheKey);
+
+  // Fallback to mock only if no cache exists
+  const student = cachedProfile || {
     name: 'Alex Johnson',
     usn: '1RV21CS001',
     residenceStatus: 'Hosteller',
     course: 'B.Tech Computer Science',
     email: 'alex.j@rvu.edu.in',
-    avatar: null // Default icon will be used
+    avatar: null
   };
 
   const handleLogout = async () => {

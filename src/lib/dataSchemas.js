@@ -135,6 +135,61 @@ export const DATA_SCHEMAS = {
         }
       }
     }
+  },
+  
+  // Student Profile: Complete student info
+  STUDENT_PROFILE: {
+    cacheKey: 'studentProfile',
+    ttl: 86400000, // 24 hours
+    source: '/api/student/profile',
+    description: 'Complete student profile details',
+    requiredFields: ['id', 'name', 'usn', 'email']
+  },
+
+  // Student Schedule: Enrolled subjects and weekly planner
+  STUDENT_SCHEDULE: {
+    cacheKey: 'studentSchedule',
+    ttl: 43200000, // 12 hours
+    source: '/api/student/schedule',
+    description: 'Student enrolled subjects and weekly planner',
+    requiredFields: ['enrolledSubjects', 'weeklySchedule'],
+    structure: {
+      studentId: 'string',
+      totalCredits: 'number',
+      enrolledSubjects: [{
+        enrollmentId: 'string',
+        subject: {
+          subject_id: 'string',
+          subject_code: 'string',
+          subject_name: 'string',
+          subject_type: 'string',
+          credits: 'number'
+        },
+        section: {
+          section_id: 'string',
+          section_name: 'string',
+          classroom: {
+            room_number: 'string',
+            building_name: 'string'
+          }
+        },
+        attendancePercentage: 'number',
+        teacher: {
+          name: 'string'
+        }
+      }],
+      weeklySchedule: 'object',
+      fetchedAt: 'timestamp'
+    }
+  },
+
+  // Semester Subjects: Historical subject lists
+  SEMESTER_SUBJECTS: {
+    cacheKey: 'studentSubjects', // Dynamic: 'studentSubjects_sem_{semester}'
+    ttl: 86400000, // 24 hours
+    source: '/api/student/subjects',
+    description: 'Historical semester subject list',
+    requiredFields: ['semester', 'subjects']
   }
 };
 

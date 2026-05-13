@@ -19,7 +19,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, typography } from '../theme';
 import Notification from '../components/Notification';
 import { useCache } from '../hooks/useCache';
-import { Class_Enrollment_API_ROUTES } from '../lib/constants';
+import { Class_Enrollment_API_ROUTES, Teacher_marks_API_ROUTES } from '../lib/constants';
 import { getAccessToken } from '../utils/tokenStorage';
 
 const MOCK_SYLLABUS = [
@@ -138,7 +138,7 @@ const MOCK_SYLLABUS = [
 ];
 
 
-export default function TeacherSyllabusTestManager({ route, navigation }) {
+export default function TeacherSubjectManagerPage({ route, navigation }) {
   const { subject } = route.params || {};
   const [activeTab, setActiveTab] = useState('students'); // 1st tab: Students List
   const [expandedModule, setExpandedModule] = useState('2');
@@ -227,7 +227,6 @@ export default function TeacherSyllabusTestManager({ route, navigation }) {
         roll: `#${student.rollNumber}`,
         course: `${student.programName} • ${student.batchName}`,
         attendance: Math.round(student.attendancePercentage),
-        image: student.profileImage || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
       }));
 
       setStudents(transformedStudents);
@@ -283,12 +282,15 @@ export default function TeacherSyllabusTestManager({ route, navigation }) {
       });
 
       // Append metadata
-      formData.append('subject_id', subject?.subjectId);
-      formData.append('exam_type', selectedExam.id);
+      formData.append('subjectId', subject?.subjectId);
+      formData.append('sectionId', subject?.sectionId || '1'); // Fallback to 1 if not present
+      formData.append('examType', selectedExam.id);
+      
+      // Optional fields for tracking, though backend currently ignores them
       formData.append('max_marks', maxMarks);
       formData.append('test_name', testName || selectedExam.name);
 
-      const response = await fetch(`${BASE_URL}/api/teacher/marks/upload`, {
+      const response = await fetch(Teacher_marks_API_ROUTES.UPLOAD, {
         method: 'POST',
         body: formData,
         headers: {
@@ -361,7 +363,9 @@ export default function TeacherSyllabusTestManager({ route, navigation }) {
                   style={styles.studentCard}
                   onPress={() => navigation.push('TeacherSubjectStudentAttendancePage', { student: item, subject })}
                 >
-                  <Image source={{ uri: item.image }} style={styles.studentAvatar} />
+                  <View style={styles.avatarPlaceholder}>
+                    <Ionicons name="person" size={24} color={colors.textGrey} />
+                  </View>
                   <View style={styles.studentInfo}>
                     <Text style={styles.studentName}>{item.name}</Text>
                     <Text style={styles.studentRoll}>{item.roll}</Text>
@@ -955,10 +959,15 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 20,
   },
-  studentAvatar: {
+  avatarPlaceholder: {
     width: 50,
     height: 50,
     borderRadius: 25,
+    backgroundColor: '#2A2A2A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
     marginRight: 12,
   },
   studentInfo: {

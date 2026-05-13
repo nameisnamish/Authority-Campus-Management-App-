@@ -19,7 +19,7 @@ import StudentDashboardPage from './src/screens/StudentDashboardPage';
 import TeacherDashboardPage from './src/screens/TeacherDashboardPage';
 import TeacherSchedulePage from './src/screens/TeacherSchedulePage';
 import ClassroomScanPage from './src/screens/ClassroomScanPage';
-import TeacherSubjectStudentsListPage from './src/screens/TeacherSubjectStudentsListPage';
+
 import TeacherSubjectStudentAttendancePage from './src/screens/TeacherSubjectStudentAttendancePage';
 import TeacherProfilePage from './src/screens/TeacherProfilePage';
 import StudentProfilePage from './src/screens/StudentProfilePage';
@@ -28,7 +28,7 @@ import TeacherAnalyticsDashboardPage from './src/screens/TeacherAnalyticsDashboa
 import StudentAnalyticsDashboard from './src/screens/StudentAnalyticsDashboard';
 import StudentSchedulePage from './src/screens/StudnetSchedulePage';
 import StudentSyllabusLearningPathPage from './src/screens/StudentSyllabusLearningPathPage';
-import TeacherSyllabusTestManager from './src/screens/TeacherSyllabusTestManager';
+import TeacherSubjectManagerPage from './src/screens/TeacherSubjectManagerPage';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -157,8 +157,8 @@ function RootNavigator() {
             <>
               <Stack.Screen name="TeacherDashboardTabs" component={TeacherTabs} />
               <Stack.Screen name="ClassroomScan" component={ClassroomScanPage} />
-              <Stack.Screen name="TeacherSubjectStudentsListPage" component={TeacherSubjectStudentsListPage} />
-              <Stack.Screen name="TeacherSyllabusTestManager" component={TeacherSyllabusTestManager} />
+
+              <Stack.Screen name="TeacherSubjectManager" component={TeacherSubjectManagerPage} />
               <Stack.Screen name="TeacherSubjectStudentAttendancePage" component={TeacherSubjectStudentAttendancePage} />
               <Stack.Screen name="TeacherProfilePage" component={TeacherProfilePage} options={{ animation: 'slide_from_bottom' }} />
             </>

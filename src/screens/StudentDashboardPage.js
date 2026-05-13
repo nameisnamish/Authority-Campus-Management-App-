@@ -370,14 +370,18 @@ export default function StudentDashboardPage({ navigation }) {
             upcomingClasses.map((classItem, index) => (
               <View key={classItem.id} style={styles.upcomingCard}>
                 <View style={styles.cardInfo}>
-                  <View style={styles.tagNext}><Text style={styles.tagTextNext}>{index === 0 ? 'NEXT' : 'UPCOMING'}</Text></View>
-                  <Text style={styles.courseTag}>{classItem.tag}</Text>
+                  <View style={styles.tagRow}>
+                    <View style={styles.tagNext}>
+                      <Text style={styles.tagTextNext}>{index === 0 ? 'NEXT' : 'UPCOMING'}</Text>
+                    </View>
+                    <Text style={styles.courseTag}>{classItem.tag}</Text>
+                  </View>
                   <Text style={styles.courseTitle}>{classItem.courseName}</Text>
                   <Text style={styles.courseSubtitle}>{classItem.meta.section} • {classItem.location.room}</Text>
                 </View>
                 <View style={styles.timeBox}>
                   <Ionicons name="time-outline" size={16} color={colors.primaryPeach} />
-                  <Text style={styles.timeText}>{classItem.timings.startLabel}{'\n'}</Text>
+                  <Text style={styles.timeText}>{classItem.timings.startLabel}</Text>
                 </View>
               </View>
             ))
@@ -395,8 +399,12 @@ export default function StudentDashboardPage({ navigation }) {
               completedClasses.map((classItem) => (
                 <View key={classItem.id} style={[styles.upcomingCard, styles.completedCard]}>
                   <View style={styles.cardInfo}>
-                    <View style={styles.tagCompleted}><Text style={styles.tagTextCompleted}>COMPLETED</Text></View>
-                    <Text style={styles.courseTag}>{classItem.tag}</Text>
+                    <View style={styles.tagRow}>
+                      <View style={styles.tagCompleted}>
+                        <Text style={styles.tagTextCompleted}>COMPLETED</Text>
+                      </View>
+                      <Text style={styles.courseTag}>{classItem.tag}</Text>
+                    </View>
                     <Text style={styles.courseTitle}>{classItem.courseName}</Text>
                     <Text style={styles.courseSubtitle}>{classItem.meta.section} • {classItem.location.room}</Text>
                   </View>
@@ -815,7 +823,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    marginBottom: 8,
   },
   tagTextNext: {
     color: colors.darkOverlay,
@@ -825,9 +832,13 @@ const styles = StyleSheet.create({
   courseTag: {
     color: colors.textGrey,
     fontSize: 12,
-    position: 'absolute',
-    top: 4,
-    left: 45,
+    fontWeight: '600',
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   courseTitle: {
     color: colors.textWhite,
@@ -1035,7 +1046,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    marginBottom: 8,
   },
   tagTextCompleted: {
     color: colors.darkOverlay,

@@ -1,164 +1,124 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 import Notification from '../components/Notification';
+import { Student_schedule_API_ROUTES } from '../lib/constants';
+import { useCache } from '../hooks/useCache';
+import { DATA_SCHEMAS } from '../lib/dataSchemas';
+import { normalizeStudentScheduleData, normalizeSemesterSubjectsData } from '../utils/dataNormalizers';
+import { getAccessToken } from '../utils/tokenStorage';
 
-// ─── Static mock data (student perspective) ───────────────────────────────────
-const MOCK_DATA_BY_SEM = {
-  1: [
-    {
-      id: 's1-1',
-      title: 'Mathematics I',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'MA-101',
-      subjectType: 'Core',
-      credits: 4,
-      room: '101',
-      roomLabel: 'Room',
-      roomIcon: 'calculator-outline',
-      attendance: 95,
-      teacher: 'Dr. Singh',
-      nextClass: 'Completed',
-    },
-    {
-      id: 's1-2',
-      title: 'Physics',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'PH-101',
-      subjectType: 'Core',
-      credits: 4,
-      room: 'Lab 1',
-      roomLabel: 'Lab',
-      roomIcon: 'flask-outline',
-      attendance: 88,
-      teacher: 'Prof. Das',
-      nextClass: 'Completed',
-    },
-  ],
-  2: [],
-  3: [
-    {
-      id: 's3-1',
-      title: 'Digital Logic Design',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-201',
-      subjectType: 'Core',
-      credits: 3,
-      room: '305',
-      roomLabel: 'Room',
-      roomIcon: 'hardware-chip-outline',
-      attendance: 78,
-      teacher: 'Prof. Verma',
-      nextClass: 'Completed',
-    },
-    {
-      id: 's3-2',
-      title: 'Data Structures',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-202',
-      subjectType: 'Core',
-      credits: 4,
-      room: '201',
-      roomLabel: 'Room',
-      roomIcon: 'list-outline',
-      attendance: 82,
-      teacher: 'Dr. Khanna',
-      nextClass: 'Completed',
-    },
-  ],
-  4: [
-    {
-      id: '1',
-      title: 'Data Structures & Algorithms',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-301',
-      subjectType: 'Core',
-      credits: 4,
-      room: '204',
-      roomLabel: 'Room',
-      roomIcon: 'server-outline',
-      attendance: 82,
-      teacher: 'Dr. Mehta',
-      nextClass: 'Mon, 10:00 AM',
-    },
-    {
-      id: '2',
-      title: 'Operating Systems',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-302',
-      subjectType: 'Core',
-      credits: 3,
-      room: 'Lab 3',
-      roomLabel: 'Lab',
-      roomIcon: 'desktop-outline',
-      attendance: 91,
-      teacher: 'Prof. Sharma',
-      nextClass: 'Tue, 9:00 AM',
-    },
-    {
-      id: '3',
-      title: 'Database Management',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-303',
-      subjectType: 'Core',
-      credits: 3,
-      room: '310',
-      roomLabel: 'Room',
-      roomIcon: 'server-outline',
-      attendance: 67,
-      teacher: 'Dr. Kapoor',
-      nextClass: 'Wed, 11:00 AM',
-    },
-    {
-      id: '4',
-      title: 'Computer Networks',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-304',
-      subjectType: 'Elective',
-      credits: 3,
-      room: '102',
-      roomLabel: 'Room',
-      roomIcon: 'wifi-outline',
-      attendance: 75,
-      teacher: 'Prof. Nair',
-      nextClass: 'Thu, 2:00 PM',
-    },
-    {
-      id: '5',
-      title: 'Machine Learning',
-      tag: 'Batch B',
-      sectionName: 'Section A',
-      subjectCode: 'CS-401',
-      subjectType: 'Elective',
-      credits: 4,
-      room: 'Lab 1',
-      roomLabel: 'Lab',
-      roomIcon: 'hardware-chip-outline',
-      attendance: 88,
-      teacher: 'Dr. Rao',
-      nextClass: 'Fri, 3:00 PM',
-    },
-  ],
-  5: [],
-  6: [],
+
+// ─── Skeleton Components ──────────────────────────────────────────────────────
+const SkeletonPlaceholder = ({ style }) => {
+  const animatedValue = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(animatedValue, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animatedValue, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [animatedValue]);
+
+  return <Animated.View style={[style, { opacity: animatedValue, backgroundColor: '#333333' }]} />;
 };
 
-const MOCK_WEEKLY = {
-  Monday:    [{ subjectName: 'Data Structures & Algorithms', sectionName: 'Batch B', room: '204',   startTime: '10:00:00' }],
-  Tuesday:   [{ subjectName: 'Operating Systems',            sectionName: 'Batch B', room: 'Lab 3', startTime: '09:00:00' }],
-  Wednesday: [{ subjectName: 'Database Management',          sectionName: 'Batch B', room: '310',   startTime: '11:00:00' }],
-  Thursday:  [{ subjectName: 'Computer Networks',            sectionName: 'Batch B', room: '102',   startTime: '14:00:00' }],
-  Friday:    [{ subjectName: 'Machine Learning',             sectionName: 'Batch B', room: 'Lab 1', startTime: '15:00:00' }],
+const SubjectCardSkeleton = () => (
+  <View style={styles.classCardSkeleton}>
+    <View style={styles.skeletonHeaderRow}>
+      <View style={{ flex: 1 }}>
+        <SkeletonPlaceholder style={styles.skeletonTitle} />
+        <SkeletonPlaceholder style={styles.skeletonSubtitle} />
+      </View>
+      <SkeletonPlaceholder style={styles.skeletonBadge} />
+    </View>
+    <SkeletonPlaceholder style={styles.skeletonBar} />
+    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginVertical: 12 }} />
+    <View style={styles.skeletonFooter}>
+      <SkeletonPlaceholder style={styles.skeletonFooterItem} />
+      <SkeletonPlaceholder style={styles.skeletonFooterItem} />
+    </View>
+  </View>
+);
+
+const ScheduleSkeleton = () => (
+  <View style={styles.skeletonContainer}>
+    <View style={styles.skeletonHeader}>
+      <View>
+        <SkeletonPlaceholder style={styles.skeletonHeaderText} />
+        <SkeletonPlaceholder style={[styles.skeletonHeaderText, { width: 120, marginTop: 10 }]} />
+      </View>
+      <SkeletonPlaceholder style={styles.skeletonCircle} />
+    </View>
+    
+    <View style={styles.skeletonTabs}>
+      <SkeletonPlaceholder style={styles.skeletonTab} />
+      <SkeletonPlaceholder style={styles.skeletonTab} />
+    </View>
+
+    <View style={{ marginBottom: 20 }}>
+      <SkeletonPlaceholder style={{ width: 100, height: 16, marginBottom: 12 }} />
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        {[1, 2, 3, 4].map(i => (
+          <SkeletonPlaceholder key={i} style={{ width: 70, height: 40, borderRadius: 20 }} />
+        ))}
+      </View>
+    </View>
+
+    {[1, 2, 3].map(i => (
+      <SubjectCardSkeleton key={i} />
+    ))}
+  </View>
+);
+
+const EmptyState = ({ title, message, onRetry, icon = "book-outline", iconColor = colors.primaryPeach }) => (
+  <View style={styles.emptyStateContainer}>
+    <View style={[styles.emptyStateIconCircle, { backgroundColor: `${iconColor}15` }]}>
+      <Ionicons name={icon} size={42} color={iconColor} />
+    </View>
+    <Text style={styles.emptyStateTitle}>{title}</Text>
+    <Text style={styles.emptyStateMessage}>{message}</Text>
+    {onRetry && (
+      <TouchableOpacity style={styles.emptyStateRetryButton} onPress={onRetry} activeOpacity={0.7}>
+        <Ionicons name="refresh-outline" size={18} color="#000" />
+        <Text style={styles.emptyStateRetryText}>Refresh Data</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
+// ─── Mapper Function ──────────────────────────────────────────────────────────
+const mapEnrollmentToSubjectCard = (enrollment) => {
+  const classroom = enrollment.section?.classroom || {};
+  const roomNumber = classroom.room_number || 'N/A';
+  
+  return {
+    id: enrollment.enrollmentId,
+    title: enrollment.subject?.subject_name || 'Unknown Subject',
+    tag: enrollment.section?.section_name || 'N/A',
+    sectionName: enrollment.section?.section_name || 'N/A',
+    subjectCode: enrollment.subject?.subject_code || 'N/A',
+    subjectType: enrollment.subject?.subject_type || 'Core',
+    credits: enrollment.subject?.credits || 0,
+    room: roomNumber,
+    roomLabel: 'Room',
+    roomIcon: enrollment.subject?.subject_type === 'Lab' ? 'flask-outline' : 'server-outline',
+    attendance: enrollment.attendancePercentage || 0,
+    teacher: enrollment.teacher?.name || 'Faculty',
+    nextClass: 'Scheduled' 
+  };
 };
 
 // ─── Helper renderers ──────────────────────────────────────────────────────────
@@ -199,9 +159,183 @@ const renderArrowButton = () => (
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function StudentSchedulePage({ navigation }) {
+  const { getCachedData, setCachedData, isHydrated } = useCache();
+
   const [activeTab, setActiveTab] = useState('subjects');
-  const [selectedSemester, setSelectedSemester] = useState(4);
+  const [selectedSemester, setSelectedSemester] = useState(null); // null until API tells us
+  const [activeSemester, setActiveSemester] = useState(null);    // real current sem from API
+  const [classData, setClassData] = useState([]);                 // displayed subjects
+  const [activeClassData, setActiveClassData] = useState([]);     // active sem subjects, preserved in memory
+  const [weeklySchedule, setWeeklySchedule] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [isSemLoading, setIsSemLoading] = useState(false);
+  const [semError, setSemError] = useState(null);                 // inline error for sem tabs (no popup)
+  const [error, setError] = useState(null);
+  const [academicYear, setAcademicYear] = useState('2024-25');
+  const [termType, setTermType] = useState('EVEN');
   const [isNotificationVisible, setNotificationVisible] = useState(false);
+
+  useEffect(() => {
+    if (isHydrated) {
+      fetchScheduleData();
+    }
+  }, [isHydrated]);
+
+  const fetchScheduleData = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. Check schedule cache
+      const cachedSchedule = getCachedData(DATA_SCHEMAS.STUDENT_SCHEDULE.cacheKey);
+      // Also try the separately-cached profile to get the semester number
+      const cachedProfile = getCachedData(DATA_SCHEMAS.STUDENT_PROFILE.cacheKey);
+
+      if (cachedSchedule) {
+        console.log('[StudentSchedule] Using cached schedule data');
+        const transformedSubjects = cachedSchedule.enrolledSubjects.subjects.map(mapEnrollmentToSubjectCard);
+        setClassData(transformedSubjects);
+        setActiveClassData(transformedSubjects); // preserve for quick restore
+        setWeeklySchedule(cachedSchedule.weeklySchedule || {});
+        
+        // Get semester from profile cache OR from inside schedule cache
+        const sem =
+          cachedProfile?.semester ||
+          cachedSchedule.studentProfile?.semester ||
+          4; // Fallback to 4 if absolutely nothing found in cache
+        
+        console.log(`[StudentSchedule] Setting semesters from cache: ${sem}`);
+        setSelectedSemester(sem);
+        setActiveSemester(sem);
+
+        const profile = cachedProfile || cachedSchedule.studentProfile;
+        if (profile) {
+          setAcademicYear(profile.academicYear || '2024-25');
+          setTermType(profile.termType || 'EVEN');
+        }
+        
+        setLoading(false);
+        return;
+      }
+
+      // 2. Fetch from API
+      const token = getAccessToken();
+      const response = await fetch(Student_schedule_API_ROUTES.STUDENT_SCHEDULE, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'User-Agent': 'ReactNative',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch student schedule: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      console.log('📡 [StudentSchedule] Raw API Response:', JSON.stringify(result, null, 2));
+      
+      if (result.success && result.data) {
+        const normalizedData = normalizeStudentScheduleData(result);
+        
+        // Cache normalized schedule data
+        setCachedData(DATA_SCHEMAS.STUDENT_SCHEDULE.cacheKey, normalizedData);
+
+        // Cache student profile separately so StudentProfilePage can use it
+        if (normalizedData.studentProfile) {
+          setCachedData(DATA_SCHEMAS.STUDENT_PROFILE.cacheKey, normalizedData.studentProfile);
+          
+          const sem = normalizedData.studentProfile.semester || 4; // Fallback to 4 if API field missing
+          console.log(`[StudentSchedule] Detected Semester ${sem} from API`);
+          setSelectedSemester(sem);
+          setActiveSemester(sem);
+          setAcademicYear(normalizedData.studentProfile.academicYear || '2024-25');
+          setTermType(normalizedData.studentProfile.termType || 'EVEN');
+        } else {
+          // If profile is missing entirely, default to 4 so UI doesn't lock
+          setSelectedSemester(4);
+          setActiveSemester(4);
+        }
+
+        const transformedSubjects = normalizedData.enrolledSubjects.subjects.map(mapEnrollmentToSubjectCard);
+        
+        console.log('✅ [StudentSchedule] Setting state with subjects:', transformedSubjects.length, 'Weekly slots:', Object.keys(normalizedData.weeklySchedule).length);
+        
+        setClassData(transformedSubjects);
+        setActiveClassData(transformedSubjects); // preserve for quick restore
+        setWeeklySchedule(normalizedData.weeklySchedule || {});
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching student schedule:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSemesterSubjects = async (semester) => {
+    try {
+      setIsSemLoading(true);
+      setSemError(null);
+      
+      // 1. Check per-semester cache first
+      const cacheKey = `${DATA_SCHEMAS.SEMESTER_SUBJECTS.cacheKey}_sem_${semester}`;
+      const cachedData = getCachedData(cacheKey);
+      
+      if (cachedData) {
+        console.log(`[StudentSubjects] Cache hit for Sem ${semester}`);
+        const transformedSubjects = cachedData.subjects.map(mapEnrollmentToSubjectCard);
+        setClassData(transformedSubjects);
+        setIsSemLoading(false);
+        return;
+      }
+
+      // 2. Fetch from API
+      const token = getAccessToken();
+      const url = `${Student_schedule_API_ROUTES.STUDENT_SUBJECTS}?semester=${semester}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'User-Agent': 'ReactNative',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 404) {
+        // Special case: 404 means no records for this semester yet
+        setSemError("NO_DATA");
+        setClassData([]);
+        return;
+      }
+
+      if (!response.ok) throw new Error(`Server error ${response.status}`);
+
+      const result = await response.json();
+      if (result.success && result.data && result.data.subjects?.length > 0) {
+        const normalized = normalizeSemesterSubjectsData(result);
+        setCachedData(cacheKey, normalized);
+        const transformedSubjects = normalized.subjects.map(mapEnrollmentToSubjectCard);
+        setClassData(transformedSubjects);
+      } else {
+        // success but empty list
+        setSemError("NO_DATA");
+        setClassData([]);
+      }
+    } catch (err) {
+      console.error(`[StudentSubjects] Error fetching Sem ${semester}:`, err);
+      setSemError("NETWORK_ERROR");
+      setClassData([]);
+    } finally {
+      setIsSemLoading(false);
+    }
+  };
 
   const handleTabChange = (tab) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -209,24 +343,35 @@ export default function StudentSchedulePage({ navigation }) {
   };
 
   const handleSemesterChange = (sem) => {
+    // Don't allow switching while initial data is still loading or sem is unknown
+    if (loading || activeSemester === null) return;
+    if (sem === selectedSemester) return; // already on this tab, do nothing
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSemError(null);
     setSelectedSemester(sem);
+    
+    if (sem === activeSemester) {
+      // Restore the active semester data from memory — no API call
+      setClassData(activeClassData);
+    } else {
+      // Fetch (or load from cache) the historical semester
+      fetchSemesterSubjects(sem);
+    }
   };
 
   // ── Dynamic stats ────────────────────────────────────────────────────────────
   const calculateStats = () => {
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     let totalClasses = 0;
     const dayStats = {};
     daysOfWeek.forEach((day) => {
-      const classes = MOCK_WEEKLY[day] || [];
+      const classes = weeklySchedule[day] || [];
       dayStats[day] = { classes: classes.length, hours: classes.length };
       totalClasses += classes.length;
     });
     
-    const currentSubjects = MOCK_DATA_BY_SEM[selectedSemester] || [];
-    const avgAttendance = currentSubjects.length > 0 
-      ? Math.round(currentSubjects.reduce((acc, s) => acc + s.attendance, 0) / currentSubjects.length)
+    const avgAttendance = classData.length > 0 
+      ? Math.round(classData.reduce((acc, s) => acc + s.attendance, 0) / classData.length)
       : 0;
 
     return { totalClasses: totalClasses.toString(), avgAttendance: `${avgAttendance}%`, dayStats };
@@ -245,7 +390,7 @@ export default function StudentSchedulePage({ navigation }) {
       <View style={styles.cardTopSection}>
         <View style={styles.tagAndTitle}>
           <Text style={styles.classTitle}>{item.title}</Text>
-          <Text style={styles.cardSubtitle}>{item.tag} • {item.sectionName}</Text>
+          <Text style={styles.cardSubtitle}>{item.sectionName}</Text>
           <View style={styles.metaInfoRow}>
             <Text style={styles.metaInfoText}>{item.subjectCode}</Text>
             <Text style={styles.metaInfoText}>•</Text>
@@ -276,7 +421,7 @@ export default function StudentSchedulePage({ navigation }) {
 
   // ── Weekly planner grid ──────────────────────────────────────────────────────
   const renderWeeklyPlanner = () => {
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     
     // Fixed Time Slots in increasing order
     const FIXED_TIME_SLOTS = [
@@ -340,8 +485,15 @@ export default function StudentSchedulePage({ navigation }) {
                       );
                     }
 
-                    const dayClasses = MOCK_WEEKLY[day] || [];
-                    const classAtTime = dayClasses.find(c => getComparisonTime(c.startTime) === slot.startTime);
+                    const dayClasses = weeklySchedule[day] || [];
+                    const classAtTime = dayClasses.find(c => {
+                      const compTime = getComparisonTime(c.startTime);
+                      const isMatch = compTime === slot.startTime;
+                      if (day === 'Monday' && isMatch) {
+                        console.log(`📍 [PlannerMatch] ${day} ${slot.label} matches ${c.subjectName}`);
+                      }
+                      return isMatch;
+                    });
 
                     return (
                       <View key={`${day}-${slot.label}`} style={styles.gridCell}>
@@ -351,7 +503,7 @@ export default function StudentSchedulePage({ navigation }) {
                               {classAtTime.subjectName || 'Class'}
                             </Text>
                             <Text style={styles.gridClassRoom} numberOfLines={1}>
-                              {classAtTime.sectionName || 'Batch B'}
+                              {classAtTime.sectionName || 'Batch'}
                             </Text>
                             <Text style={styles.gridClassRoom} numberOfLines={1}>
                               {classAtTime.room || 'N/A'}
@@ -373,6 +525,7 @@ export default function StudentSchedulePage({ navigation }) {
   // ── Semester Selector ────────────────────────────────────────────────────────
   const renderSemesterSelector = () => {
     const semesters = [1, 2, 3, 4, 5, 6];
+    const isDisabled = loading || activeSemester === null;
     return (
       <View style={styles.semesterSelectorContainer}>
         <Text style={styles.semesterSelectorLabel}>Select Semester</Text>
@@ -382,9 +535,11 @@ export default function StudentSchedulePage({ navigation }) {
               key={`sem-${sem}`}
               style={[
                 styles.semesterButton,
-                selectedSemester === sem && styles.semesterButtonActive
+                selectedSemester === sem && styles.semesterButtonActive,
+                isDisabled && { opacity: 0.4 }
               ]}
               onPress={() => handleSemesterChange(sem)}
+              disabled={isDisabled}
             >
               <Text style={[
                 styles.semesterButtonText,
@@ -399,6 +554,28 @@ export default function StudentSchedulePage({ navigation }) {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScheduleSkeleton />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <EmptyState 
+          title="Connection Error" 
+          message={error} 
+          onRetry={fetchScheduleData} 
+        />
+      </SafeAreaView>
+    );
+  }
+
   // ── Main render ──────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -409,7 +586,7 @@ export default function StudentSchedulePage({ navigation }) {
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Schedule &</Text>
             <Text style={styles.headerTitle}>Subjects</Text>
-            <Text style={styles.semesterInfo}>Academic Year 2026 • Term 2</Text>
+            <Text style={styles.semesterInfo}>Academic Year {academicYear} • {termType} Term</Text>
           </View>
           <TouchableOpacity style={styles.notificationButton} onPress={() => setNotificationVisible(true)}>
             <Ionicons name="notifications-outline" size={24} color={colors.textWhite} />
@@ -442,13 +619,33 @@ export default function StudentSchedulePage({ navigation }) {
           <>
             {renderSemesterSelector()}
             <View style={styles.classesContainer}>
-              {MOCK_DATA_BY_SEM[selectedSemester] && MOCK_DATA_BY_SEM[selectedSemester].length > 0 ? (
-                MOCK_DATA_BY_SEM[selectedSemester].map((item) => renderSubjectCard(item))
-              ) : (
-                <View style={styles.emptyState}>
-                  <Ionicons name="book-outline" size={48} color={colors.textGrey} />
-                  <Text style={styles.emptyStateText}>No subjects found for Semester {selectedSemester}</Text>
+              {isSemLoading ? (
+                <View style={styles.classesContainer}>
+                  {[1, 2, 3].map(i => <SubjectCardSkeleton key={i} />)}
                 </View>
+              ) : semError === "NO_DATA" ? (
+                <EmptyState
+                  title={`No Subjects Found`}
+                  message={`We don't have any enrolled subjects on file for Semester ${selectedSemester} yet.`}
+                  icon="journal-outline"
+                  iconColor={colors.textGrey}
+                />
+              ) : semError === "NETWORK_ERROR" ? (
+                <EmptyState
+                  title="Connection Issue"
+                  message="We're having trouble connecting to the academic portal. Check your internet or try again."
+                  icon="wifi-outline"
+                  iconColor="#FF6B6B"
+                  onRetry={() => fetchSemesterSubjects(selectedSemester)}
+                />
+              ) : classData && classData.length > 0 ? (
+                classData.map((item) => renderSubjectCard(item))
+              ) : (
+                <EmptyState 
+                  title={`Semester ${selectedSemester}`} 
+                  message="No records found for this academic period."
+                  onRetry={selectedSemester !== activeSemester ? () => fetchSemesterSubjects(selectedSemester) : fetchScheduleData}
+                />
               )}
             </View>
           </>
@@ -501,7 +698,7 @@ export default function StudentSchedulePage({ navigation }) {
             <View style={styles.spotlightSection}>
               <Text style={styles.sectionHeading}>Student Notice</Text>
               <Text style={styles.spotlightText}>
-                Mid-semester examinations for Term 2 are scheduled for the last week of May 2026. Check your exam timetable on the portal.
+                Mid-semester examinations for {termType} Term are scheduled for the last week of May {academicYear.split('-')[1] || '2025'}. Check your exam timetable on the portal.
               </Text>
               <TouchableOpacity style={styles.spotlightLink}>
                 <Text style={styles.spotlightLinkText}>View Exam Schedule </Text>
@@ -527,6 +724,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    color: colors.textWhite,
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: colors.primaryGreen,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   // Header
@@ -608,21 +833,28 @@ const styles = StyleSheet.create({
     paddingRight: 20,
   },
   semesterButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 24,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    minWidth: 85,
+    alignItems: 'center',
   },
   semesterButtonActive: {
     backgroundColor: colors.primaryGreen,
     borderColor: colors.primaryGreen,
+    elevation: 4,
+    shadowColor: colors.primaryGreen,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   semesterButtonText: {
     color: colors.textGrey,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   semesterButtonTextActive: {
     color: '#000000',
@@ -757,18 +989,48 @@ const styles = StyleSheet.create({
   },
 
   // Empty state
-  emptyState: {
+  emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    gap: 16,
+    paddingHorizontal: 40,
   },
-  emptyStateText: {
+  emptyStateIconCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyStateTitle: {
+    color: colors.textWhite,
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  emptyStateMessage: {
     color: colors.textGrey,
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
-    paddingHorizontal: 40,
+    lineHeight: 20,
+    marginBottom: 28,
+  },
+  emptyStateRetryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryGreen,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 30,
+    gap: 8,
+  },
+  emptyStateRetryText: {
+    color: '#000000',
+    fontSize: 15,
+    fontWeight: '700',
   },
 
   // Planner layout
@@ -976,6 +1238,95 @@ const styles = StyleSheet.create({
   spotlightLinkText: {
     color: colors.primaryGreen,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  tabLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingTabText: {
+    color: colors.textGrey,
+    fontSize: 14,
+    marginTop: 12,
+  },
+
+  // Skeleton Styles
+  skeletonContainer: {
+    flex: 1,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  skeletonHeaderText: {
+    width: 180,
+    height: 32,
+    borderRadius: 8,
+  },
+  skeletonCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  skeletonTabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 6,
+    borderRadius: 30,
+  },
+  skeletonTab: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+  },
+  classCardSkeleton: {
+    backgroundColor: colors.surface,
+    borderRadius: 32,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  skeletonHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  skeletonTitle: {
+    width: '70%',
+    height: 24,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  skeletonSubtitle: {
+    width: '40%',
+    height: 16,
+    borderRadius: 4,
+  },
+  skeletonBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  skeletonBar: {
+    width: '100%',
+    height: 8,
+    borderRadius: 4,
+    marginTop: 12,
+  },
+  skeletonFooter: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  skeletonFooterItem: {
+    flex: 1,
+    height: 16,
+    borderRadius: 4,
   },
 });

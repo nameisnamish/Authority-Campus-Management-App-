@@ -319,7 +319,7 @@ export default function TeacherSchedulePage({ navigation }) {
     });
 
     return (
-      <TouchableOpacity key={classItem.id} style={styles.classCard} onPress={() => navigation.navigate('TeacherSyllabusTestManager', { subject: classItem })}>
+      <TouchableOpacity key={classItem.id} style={styles.classCard} onPress={() => navigation.navigate('TeacherSubjectManager', { subject: classItem })}>
         {renderTopBadge(classItem)}
         <View style={styles.cardTopSection}>
           <View style={styles.tagAndTitle}>

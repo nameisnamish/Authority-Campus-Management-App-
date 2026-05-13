@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator, AppState } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, ActivityIndicator, AppState, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, typography } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,9 @@ export default function TeacherDashboardPage({ navigation }) {
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' or 'completed'
+  const [liveClass, setLiveClass] = useState(null);
+  const [upcomingClasses, setUpcomingClasses] = useState([]);
+  const [completedClasses, setCompletedClasses] = useState([]);
   const [isNotificationVisible, setNotificationVisible] = useState(false);
 
   // Animation Values
@@ -30,40 +33,61 @@ export default function TeacherDashboardPage({ navigation }) {
   const listItemsFade = useRef(new Animated.Value(0)).current;
   const listItemsSlide = useRef(new Animated.Value(20)).current;
 
-  // Classify classes into live / upcoming / completed using the full ISO timestamps
-  // from the API (e.g. "2026-05-02T03:30:00.000Z"). Direct Date comparison is correct
-  // because the API sends real dated UTC times, not epoch-based time-of-day stubs.
+  // Utility: Create today's date with API time (re-anchors to client's "today")
+  const createTodayDateFromAPITime = (apiTimeString) => {
+    try {
+      // Support both ISO strings and time-only strings for robustness
+      const apiDate = new Date(apiTimeString);
+      
+      // If it's a time-only string like "09:00:00", many engines return Invalid Date.
+      // But since we standardized the backend to ISO, this works reliably.
+      const hours = apiDate.getHours();
+      const minutes = apiDate.getMinutes();
+      const seconds = apiDate.getSeconds();
+      
+      const today = new Date();
+      today.setHours(hours, minutes, seconds, 0);
+      return today;
+    } catch (err) {
+      return new Date();
+    }
+  };
+
+  // Classify classes into live / upcoming / completed
   const classifyClasses = (schedule, now) => {
     if (!schedule || schedule.length === 0) return { live: null, upcoming: [], completed: [] };
 
-    let liveClass = null;
-    const upcomingClasses = [];
-    const completedClasses = [];
+    let live = null;
+    const upcoming = [];
+    const completed = [];
 
     schedule.forEach(classItem => {
-      const startTime = new Date(classItem.timings?.startTime);
-      const endTime   = new Date(classItem.timings?.endTime);
+      // Use the standard Student Dashboard logic: anchor to today's date
+      const startTime = createTodayDateFromAPITime(classItem.timings?.isoStart || classItem.timings?.startTime);
+      const endTime   = createTodayDateFromAPITime(classItem.timings?.isoEnd || classItem.timings?.endTime);
 
       if (now >= startTime && now <= endTime) {
-        liveClass = classItem;
+        live = classItem;
       } else if (now < startTime) {
-        upcomingClasses.push(classItem);
+        upcoming.push(classItem);
       } else if (now > endTime) {
-        completedClasses.push(classItem);
+        completed.push(classItem);
       }
     });
 
     // Sort upcoming ascending by start time
-    upcomingClasses.sort((a, b) =>
-      new Date(a.timings?.startTime) - new Date(b.timings?.startTime)
+    upcoming.sort((a, b) =>
+      createTodayDateFromAPITime(a.timings?.isoStart || a.timings?.startTime) - 
+      createTodayDateFromAPITime(b.timings?.isoStart || b.timings?.startTime)
     );
 
     // Sort completed descending by end time (most recent first)
-    completedClasses.sort((a, b) =>
-      new Date(b.timings?.endTime) - new Date(a.timings?.endTime)
+    completed.sort((a, b) =>
+      createTodayDateFromAPITime(b.timings?.isoEnd || b.timings?.endTime) - 
+      createTodayDateFromAPITime(a.timings?.isoEnd || a.timings?.endTime)
     );
 
-    return { live: liveClass, upcoming: upcomingClasses, completed: completedClasses };
+    return { live, upcoming, completed };
   };
 
   // Update current time every minute and when app comes to foreground
@@ -177,6 +201,19 @@ export default function TeacherDashboardPage({ navigation }) {
     fetchDashboardData();
   }, []);
 
+  // Automatic re-classification whenever time or data changes
+  useEffect(() => {
+    if (dashboardData && dashboardData.todaySchedule) {
+      // Use LayoutAnimation for smooth shifts when a class goes LIVE
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      
+      const { live, upcoming, completed } = classifyClasses(dashboardData.todaySchedule, currentTime);
+      setLiveClass(live);
+      setUpcomingClasses(upcoming);
+      setCompletedClasses(completed);
+    }
+  }, [dashboardData, currentTime]);
+
   // Trigger animations when data loads
   useEffect(() => {
     if (!loading && dashboardData) {
@@ -245,9 +282,7 @@ export default function TeacherDashboardPage({ navigation }) {
     );
   }
 
-  // Classify classes based on current time
-  const { live: liveClass, upcoming: upcomingClasses, completed: completedClasses } =
-    classifyClasses(dashboardData?.todaySchedule, currentTime);
+
 
   // Determine if there are no classes today (weekend or no schedule)
   const hasNoClasses = !dashboardData?.todaySchedule || dashboardData.todaySchedule.length === 0;
@@ -316,74 +351,76 @@ export default function TeacherDashboardPage({ navigation }) {
           <>
             {activeTab === 'upcoming' ? (
               <>
-                {liveClass && (
-                  <Animated.View style={[styles.liveCard, { opacity: liveCardFade, transform: [{ scale: liveCardScale }] }]}>
-                    {/* Decorative shapes background */}
-                    <View style={styles.shapeCircle1} />
-                    <View style={styles.shapeCircle2} />
-                    <View style={styles.shapeSquare1} />
-                    <View style={styles.shapeCircle3} />
-                    <View style={styles.shapeSquare2} />
-                    <View style={styles.shapeCircle4} />
-                    <View style={styles.shapeSquare3} />
-                    <View style={styles.shapeCircle5} />
+                <Animated.View style={[styles.liveCard, { opacity: liveCardFade, transform: [{ scale: liveCardScale }] }]}>
+                  {/* Decorative shapes background */}
+                  <View style={styles.shapeCircle1} />
+                  <View style={styles.shapeCircle2} />
+                  <View style={styles.shapeSquare1} />
+                  <View style={styles.shapeCircle3} />
+                  <View style={styles.shapeSquare2} />
+                  <View style={styles.shapeCircle4} />
+                  <View style={styles.shapeSquare3} />
+                  <View style={styles.shapeCircle5} />
 
-                    <View style={styles.liveHeader}>
-                      <View style={styles.liveBadge}>
-                        <View style={styles.liveDot} />
-                        <Text style={styles.liveBadgeText}>LIVE NOW</Text>
+                  {liveClass ? (
+                    <>
+                      <View style={styles.liveHeader}>
+                        <View style={styles.liveBadge}>
+                          <View style={styles.liveDot} />
+                          <Text style={styles.liveBadgeText}>LIVE NOW</Text>
+                        </View>
                       </View>
+
+                      <View style={styles.liveContent}>
+                        <View style={styles.liveTextContainer}>
+                          <Text style={styles.liveTitle}>{liveClass.subjectName.split(' ').slice(0, 2).join(' ')}</Text>
+                          {liveClass.subjectName.split(' ').slice(2).join(' ') && (
+                            <Text style={styles.liveTitle}>{liveClass.subjectName.split(' ').slice(2).join(' ')}</Text>
+                          )}
+                          <Text style={styles.liveSubtitle}>{liveClass.batch} • {liveClass.room}</Text>
+                          <Text style={styles.liveStats}>Class Strength: {liveClass.classStrength}</Text>
+                          <Text style={styles.liveStats}>Time: {liveClass.timings?.startLabel} - {liveClass.timings?.endLabel}</Text>
+                        </View>
+                        <View style={styles.laptopIcon}>
+                          <View style={styles.shapeSmallSquare} />
+                          <View style={styles.shapeSmallCircleTop} />
+                          <View style={styles.laptopScreen} />
+                          <View style={styles.laptopBase} />
+                          <View style={styles.shapeSmallCircleBottom} />
+                          <View style={styles.shapeSmallSquareLeft} />
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.swipeButton}
+                        onPress={() => {
+                          console.log('🚀 Navigating to ClassroomScan with:', {
+                            timetableId: liveClass.id,
+                            subjectName: liveClass.subjectName,
+                            batch: liveClass.batch
+                          });
+                          navigation.navigate('ClassroomScan', {
+                            timetableId: liveClass.id,
+                            subjectName: liveClass.subjectName,
+                            batch: liveClass.batch
+                          });
+                        }}
+                      >
+                        <Ionicons name="scan-outline" size={24} color={colors.textWhite} style={styles.swipeIcon} />
+                        <Text style={styles.swipeText}>Swipe to Scan Classroom</Text>
+                        <Ionicons name="arrow-forward" size={20} color={colors.textWhite} style={styles.swipeArrow} />
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <View style={styles.noLiveClassContainer}>
+                      <Ionicons name="information-circle-outline" size={48} color={colors.primaryPeach} />
+                      <Text style={styles.noLiveClassText}>No Live Class</Text>
+                      <Text style={styles.noLiveClassSubtext}>
+                        {upcomingClasses.length > 0 ? 'Your next class will begin soon' : 'All classes for today are completed'}
+                      </Text>
                     </View>
-
-                    <View style={styles.liveContent}>
-                      <View style={styles.liveTextContainer}>
-                        <Text style={styles.liveTitle}>{liveClass.subjectName.split(' ').slice(0, 2).join(' ')}</Text>
-                        {liveClass.subjectName.split(' ').slice(2).join(' ') && (
-                          <Text style={styles.liveTitle}>{liveClass.subjectName.split(' ').slice(2).join(' ')}</Text>
-                        )}
-                        <Text style={styles.liveSubtitle}>{liveClass.batch} • {liveClass.room}</Text>
-                        <Text style={styles.liveStats}>Class Strength: {liveClass.classStrength}</Text>
-                        <Text style={styles.liveStats}>Time: {liveClass.timings?.startLabel} - {liveClass.timings?.endLabel}</Text>
-                      </View>
-                      <View style={styles.laptopIcon}>
-                        <View style={styles.shapeSmallSquare} />
-                        <View style={styles.shapeSmallCircleTop} />
-                        <View style={styles.laptopScreen} />
-                        <View style={styles.laptopBase} />
-                        <View style={styles.shapeSmallCircleBottom} />
-                        <View style={styles.shapeSmallSquareLeft} />
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={styles.swipeButton}
-                      onPress={() => {
-                        console.log('🚀 Navigating to ClassroomScan with:', {
-                          timetableId: liveClass.id,
-                          subjectName: liveClass.subjectName,
-                          batch: liveClass.batch
-                        });
-                        navigation.navigate('ClassroomScan', {
-                          timetableId: liveClass.id,
-                          subjectName: liveClass.subjectName,
-                          batch: liveClass.batch
-                        });
-                      }}
-                    >
-                      <Ionicons name="scan-outline" size={24} color={colors.textWhite} style={styles.swipeIcon} />
-                      <Text style={styles.swipeText}>Swipe to Scan Classroom</Text>
-                      <Ionicons name="arrow-forward" size={20} color={colors.textWhite} style={styles.swipeArrow} />
-                    </TouchableOpacity>
-                  </Animated.View>
-                )}
-
-                {!liveClass && upcomingClasses.length === 0 && (
-                  <View style={[styles.noLiveClassContainer, { minHeight: 400 }]}>
-                    <Ionicons name="information-circle-outline" size={48} color={colors.primaryPeach} />
-                    <Text style={styles.noLiveClassText}>No Live Class</Text>
-                    <Text style={styles.noLiveClassSubtext}>All classes for today are completed</Text>
-                  </View>
-                )}
+                  )}
+                </Animated.View>
 
                 {/* Upcoming Classes Section */}
                 {upcomingClasses.length > 0 && (
@@ -400,10 +437,8 @@ export default function TeacherDashboardPage({ navigation }) {
                           <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
                         </View>
                         <View style={styles.timeBox}>
-                          <Ionicons name="time-outline" size={14} color={colors.primaryPeach} />
-                          <Text style={styles.timeRangeText}>{classItem.timings?.startLabel}</Text>
-                          <Text style={styles.timeSeperatorText}>-</Text>
-                          <Text style={styles.timeRangeText}>{classItem.timings?.endLabel}</Text>
+                          <Ionicons name="time-outline" size={18} color={colors.primaryPeach} />
+                          <Text style={styles.timeText}>{classItem.timings?.startLabel}</Text>
                         </View>
                       </View>
                     ))}
@@ -414,7 +449,7 @@ export default function TeacherDashboardPage({ navigation }) {
               <>
                 {/* Completed Classes Section - Tab Content */}
                 {completedClasses.length > 0 ? (
-                  <View style={{ marginTop: 8 }}>
+                  <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }], marginTop: 8 }}>
                     {completedClasses.map((classItem) => (
                       <View key={classItem.id} style={[styles.upcomingCard, styles.completedCard]}>
                         <View style={styles.cardInfo}>
@@ -426,23 +461,19 @@ export default function TeacherDashboardPage({ navigation }) {
                           <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
                         </View>
                         <View style={[styles.timeBox, styles.timeBoxCompleted]}>
-                          <Ionicons name="checkmark-done-circle" size={14} color={colors.primaryGreen} />
-                          <Text style={[styles.timeRangeText, styles.timeTextCompleted]}>
+                          <Ionicons name="checkmark-done-circle" size={18} color={colors.primaryGreen} />
+                          <Text style={[styles.timeText, styles.timeTextCompleted]}>
                             {classItem.timings?.startLabel}
-                          </Text>
-                          <Text style={[styles.timeSeperatorText, styles.timeTextCompleted]}>-</Text>
-                          <Text style={[styles.timeRangeText, styles.timeTextCompleted]}>
-                            {classItem.timings?.endLabel}
                           </Text>
                         </View>
                       </View>
                     ))}
-                  </View>
+                  </Animated.View>
                 ) : (
-                  <View style={[styles.noLiveClassContainer, { minHeight: 400 }]}>
+                  <View style={styles.noUpcomingContainer}>
                     <Ionicons name="checkmark-done" size={48} color={colors.primaryGreen} />
-                    <Text style={styles.noLiveClassText}>No Completed Classes</Text>
-                    <Text style={styles.noLiveClassSubtext}>You haven't completed any classes yet</Text>
+                    <Text style={[styles.noUpcomingText, { marginTop: 12, color: colors.textWhite, fontSize: 16, fontWeight: '700' }]}>No Completed Classes</Text>
+                    <Text style={[styles.noUpcomingText, { marginTop: 4 }]}>You haven't completed any classes yet</Text>
                   </View>
                 )}
               </>
@@ -734,21 +765,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 16,
     padding: 12,
-    flexDirection: 'row',
-    gap: 4,
-    flexWrap: 'nowrap',
-    minWidth: 'auto',
+    minWidth: 80,
   },
-  timeRangeText: {
+  timeText: {
     color: colors.textWhite,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '700',
-    textAlign: 'center',
-  },
-  timeSeperatorText: {
-    color: colors.textWhite,
-    fontSize: 10,
-    fontWeight: '600',
+    marginTop: 4,
   },
   recentUpdatesCard: {
     backgroundColor: colors.surface,
@@ -966,22 +989,35 @@ const styles = StyleSheet.create({
   noLiveClassContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 24,
-    paddingVertical: 60,
+    paddingVertical: 10,
   },
   noLiveClassText: {
-    color: colors.textWhite,
-    fontSize: typography.body1,
-    fontWeight: '700',
+    color: colors.darkOverlay,
+    fontSize: 22,
+    fontWeight: '800',
     marginTop: 12,
   },
   noLiveClassSubtext: {
-    color: colors.textGrey,
-    fontSize: typography.body2,
+    color: 'rgba(0, 0, 0, 0.6)',
+    fontSize: 14,
     marginTop: 4,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  noUpcomingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    backgroundColor: colors.surface,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    marginTop: 8,
+  },
+  noUpcomingText: {
+    color: colors.textGrey,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

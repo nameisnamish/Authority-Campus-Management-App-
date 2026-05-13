@@ -271,7 +271,8 @@ export default function TeacherSubjectStudentAttendancePage({ route, navigation 
       navigation.goBack();
       return;
     }
-    navigation.navigate('TeacherSubjectStudentsListPage', { subject });
+    // Fallback to the main Subject Manager hub
+    navigation.navigate('TeacherSubjectManager', { subject });
   };
 
   const getSelectedDateInfo = () => {

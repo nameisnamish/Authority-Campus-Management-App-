@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,6 +47,7 @@ function StudentTabs() {
           height: 80,
           paddingBottom: 20,
         },
+        sceneContainerStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.primaryGreen,
         tabBarInactiveTintColor: colors.textGrey,
         tabBarIcon: ({ focused, color, size }) => {
@@ -79,6 +80,7 @@ function TeacherTabs() {
           height: 80,
           paddingBottom: 20,
         },
+        sceneContainerStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.primaryGreen,
         tabBarInactiveTintColor: colors.textGrey,
         tabBarIcon: ({ focused, color, size }) => {
@@ -99,6 +101,17 @@ function TeacherTabs() {
   );
 }
 
+const NavTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: '#121212',
+    card: '#121212',
+    text: '#ffffff',
+    border: 'transparent',
+  },
+};
+
 /**
  * Root Navigation - Routes based on authentication status and user role
  */
@@ -114,7 +127,7 @@ function RootNavigator() {
   // Show loading screen while checking auth status
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#121212' }}>
         <ActivityIndicator size="large" color={colors.primaryGreen} />
       </View>
     );
@@ -131,8 +144,8 @@ function RootNavigator() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
-        animation: 'fade',
-        animationDuration: 1500,
+        animation: 'slide_from_right',
+        animationDuration: 400,
       }}
     >
       {/* Auth Stack - Always available for navigation back to login */}
@@ -173,11 +186,13 @@ export default function App() {
   return (
     <AuthProvider>
       <DataCacheProvider>
-        <SafeAreaProvider>
-          <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
+        <SafeAreaProvider style={{ backgroundColor: '#121212' }}>
+          <StatusBar barStyle="light-content" backgroundColor="#121212" translucent={true} />
+          <View style={{ flex: 1, backgroundColor: '#121212' }}>
+            <NavigationContainer theme={NavTheme}>
+              <RootNavigator />
+            </NavigationContainer>
+          </View>
         </SafeAreaProvider>
       </DataCacheProvider>
     </AuthProvider>

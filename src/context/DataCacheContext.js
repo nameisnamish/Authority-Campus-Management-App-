@@ -12,6 +12,7 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { DATA_SCHEMAS, isCacheValid, validateCacheData } from '../lib/dataSchemas';
 import { saveCacheToDisk, loadCacheFromDisk } from '../utils/cacheStorage';
+import { AuthContext } from './AuthContext';
 
 export const DataCacheContext = createContext({
   getCachedData: () => null,
@@ -40,6 +41,7 @@ export function DataCacheProvider({ children }) {
   });
 
   const [isHydrated, setIsHydrated] = useState(false);
+  const { isSignedIn } = React.useContext(AuthContext);
 
   // Load cache from disk on startup
   useEffect(() => {
@@ -63,6 +65,15 @@ export function DataCacheProvider({ children }) {
       saveCacheToDisk(cache);
     }
   }, [cache, isHydrated]);
+
+  // AUTOMATIC PURGE ON LOGOUT
+  // If user is no longer signed in, clear all memory and disk cache
+  useEffect(() => {
+    if (isHydrated && !isSignedIn) {
+      console.log('🧹 Auth state changed (Logged Out). Purging all cached data for security.');
+      clearAllCache();
+    }
+  }, [isSignedIn, isHydrated]);
 
   /**
    * Get data from cache if it's valid and not expired

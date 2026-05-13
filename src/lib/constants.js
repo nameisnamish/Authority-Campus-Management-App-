@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://84c0-103-5-132-18.ngrok-free.app';
+export const BASE_URL = 'https://a3aa-103-5-132-18.ngrok-free.app';
 
 export const Teacher_dashboard_API_ROUTES = {
     TEACHER_DASHBOARD: `${BASE_URL}/api/teacher/dashboard`,
@@ -23,6 +23,7 @@ export const Student_dashboard_API_ROUTES = {
 export const Student_schedule_API_ROUTES = {
     STUDENT_SCHEDULE: `${BASE_URL}/api/student/schedule`,
     STUDENT_SUBJECTS: `${BASE_URL}/api/student/subjects`,
+    STUDENT_ATTENDANCE_REPORT: `${BASE_URL}/api/student/attendance/report`,
 };
 
 // Library QR Scanner Configuration
@@ -49,7 +50,7 @@ export const Class_Enrollment_API_ROUTES = {
     ENROLL: `${BASE_URL}/api/teacher/attendance/class-enrollments`,
 };
 
-export const Student_Attendance_Report_API_ROUTES = {
+export const Teacher_Attendance_Report_API_ROUTES = {
     REPORT: `${BASE_URL}/api/teacher/attendance/student-report`,
 
 };

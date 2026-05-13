@@ -13,7 +13,7 @@
  * // Clear specific cache
  * invalidateCache('teacherProfile');
  * 
- * // Clear all cache (on logout)
+ * // Clear all cache (Handled automatically on logout, but available manually)
  * clearAllCache();
  */
 

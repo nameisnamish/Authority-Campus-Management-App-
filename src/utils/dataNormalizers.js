@@ -178,10 +178,10 @@ export const normalizeSemesterSubjectsData = (apiResponse) => {
     subjects: (data.subjects || []).map(sub => ({
       enrollmentId: sub.subject_id, 
       subject: {
-        subject_id: sub.subject_id,
-        subject_code: sub.subject_code,
-        subject_name: sub.subject_name,
-        subject_type: sub.subject_type || 'Core',
+        subjectId: sub.subject_id,
+        subjectCode: sub.subject_code,
+        subjectName: sub.subject_name,
+        subjectType: sub.subject_type || 'Core',
         credits: sub.credits
       },
       // Mocking section/classroom for historical consistency in card layout
@@ -190,6 +190,8 @@ export const normalizeSemesterSubjectsData = (apiResponse) => {
         classroom: { room_number: 'Archived', building_name: '' }
       },
       attendancePercentage: sub.attendancePercentage || 0,
+      safeToMiss: sub.safeToMiss || 0,
+      classesMissed: sub.classesMissed || 0,
       teacher: { name: 'Faculty' } 
     })),
     fetchedAt: Date.now()
@@ -214,10 +216,10 @@ export const normalizeStudentScheduleData = (apiResponse) => {
   const normalizedSubjects = (data.enrolledSubjects || []).map(enrollment => ({
     enrollmentId: enrollment.enrollmentId,
     subject: {
-      subject_id: enrollment.subject?.subject_id,
-      subject_code: enrollment.subject?.subject_code,
-      subject_name: enrollment.subject?.subject_name,
-      subject_type: enrollment.subject?.subject_type,
+      subjectId: enrollment.subject?.subject_id,
+      subjectCode: enrollment.subject?.subject_code,
+      subjectName: enrollment.subject?.subject_name,
+      subjectType: enrollment.subject?.subject_type,
       credits: enrollment.subject?.credits
     },
     section: {
@@ -229,6 +231,8 @@ export const normalizeStudentScheduleData = (apiResponse) => {
       }
     },
     attendancePercentage: enrollment.attendancePercentage || 0,
+    safeToMiss: enrollment.safeToMiss || 0,
+    classesMissed: enrollment.classesMissed || 0,
     teacher: {
       name: enrollment.teacher?.name || 'Faculty'
     }

@@ -19,20 +19,20 @@ const SkeletonPlaceholder = ({ style }) => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(animatedValue, {
-          toValue: 0.7,
-          duration: 800,
+          toValue: 0.6,
+          duration: 1000,
           useNativeDriver: true,
         }),
         Animated.timing(animatedValue, {
           toValue: 0.3,
-          duration: 800,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
     ).start();
   }, [animatedValue]);
 
-  return <Animated.View style={[style, { opacity: animatedValue, backgroundColor: '#333333' }]} />;
+  return <Animated.View style={[style, { opacity: animatedValue, backgroundColor: 'rgba(255,255,255,0.08)' }]} />;
 };
 
 const SubjectCardSkeleton = () => (
@@ -55,10 +55,10 @@ const SubjectCardSkeleton = () => (
 
 const ScheduleSkeleton = () => (
   <View style={styles.skeletonContainer}>
-    <View style={styles.skeletonHeader}>
-      <View>
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
         <SkeletonPlaceholder style={styles.skeletonHeaderText} />
-        <SkeletonPlaceholder style={[styles.skeletonHeaderText, { width: 120, marginTop: 10 }]} />
+        <SkeletonPlaceholder style={[styles.skeletonHeaderText, { width: 140, height: 14, marginTop: 12 }]} />
       </View>
       <SkeletonPlaceholder style={styles.skeletonCircle} />
     </View>
@@ -106,11 +106,12 @@ const mapEnrollmentToSubjectCard = (enrollment) => {
   
   return {
     id: enrollment.enrollmentId,
-    title: enrollment.subject?.subject_name || 'Unknown Subject',
+    subjectId: enrollment.subject?.subjectId?.toString() || '',
+    title: enrollment.subject?.subjectName || 'Unknown Subject',
     tag: enrollment.section?.section_name || 'N/A',
     sectionName: enrollment.section?.section_name || 'N/A',
-    subjectCode: enrollment.subject?.subject_code || 'N/A',
-    subjectType: enrollment.subject?.subject_type || 'Core',
+    subjectCode: enrollment.subject?.subjectCode || 'N/A',
+    subjectType: enrollment.subject?.subjectType || 'Core',
     credits: enrollment.subject?.credits || 0,
     room: roomNumber,
     roomLabel: 'Room',
@@ -169,11 +170,25 @@ export default function StudentSchedulePage({ navigation }) {
   const [weeklySchedule, setWeeklySchedule] = useState({});
   const [loading, setLoading] = useState(true);
   const [isSemLoading, setIsSemLoading] = useState(false);
-  const [semError, setSemError] = useState(null);                 // inline error for sem tabs (no popup)
+  const [semError, setSemError] = useState(null);                 
   const [error, setError] = useState(null);
   const [academicYear, setAcademicYear] = useState('2024-25');
   const [termType, setTermType] = useState('EVEN');
   const [isNotificationVisible, setNotificationVisible] = useState(false);
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!loading) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      fadeAnim.setValue(0);
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (isHydrated) {
@@ -235,7 +250,7 @@ export default function StudentSchedulePage({ navigation }) {
 
       const result = await response.json();
       
-      console.log('📡 [StudentSchedule] Raw API Response:', JSON.stringify(result, null, 2));
+      console.log('📡 [StudentSchedule] API fetch successful');
       
       if (result.success && result.data) {
         const normalizedData = normalizeStudentScheduleData(result);
@@ -579,7 +594,8 @@ export default function StudentSchedulePage({ navigation }) {
   // ── Main render ──────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
         <View style={styles.header}>
@@ -708,7 +724,7 @@ export default function StudentSchedulePage({ navigation }) {
           </View>
         )}
       </ScrollView>
-
+      </Animated.View>
       <Notification visible={isNotificationVisible} onClose={() => setNotificationVisible(false)} />
     </SafeAreaView>
   );

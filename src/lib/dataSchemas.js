@@ -104,7 +104,7 @@ export const DATA_SCHEMAS = {
   },
 
   // Student Attendance Report: Detailed attendance data for a student
-  STUDENT_ATTENDANCE_REPORT: {
+  TEACHER_STUDENT_ATTENDANCE_REPORT: {
     cacheKey: 'studentReport', // Dynamic: 'studentReport_{student_id}_{subject_id}_{month}_{year}'
     ttl: 3600000, // 1 hour - detailed data
     source: '/api/teacher/attendance/student-report',
@@ -146,41 +146,22 @@ export const DATA_SCHEMAS = {
     requiredFields: ['id', 'name', 'usn', 'email']
   },
 
-  // Student Schedule: Enrolled subjects and weekly planner
+  // Student Schedule: Full enrolled subjects and weekly planner
   STUDENT_SCHEDULE: {
     cacheKey: 'studentSchedule',
-    ttl: 43200000, // 12 hours
+    ttl: 300000, // 5 minutes - Short lived to keep planner fresh and memory clean
     source: '/api/student/schedule',
-    description: 'Student enrolled subjects and weekly planner',
-    requiredFields: ['enrolledSubjects', 'weeklySchedule'],
-    structure: {
-      studentId: 'string',
-      totalCredits: 'number',
-      enrolledSubjects: [{
-        enrollmentId: 'string',
-        subject: {
-          subject_id: 'string',
-          subject_code: 'string',
-          subject_name: 'string',
-          subject_type: 'string',
-          credits: 'number'
-        },
-        section: {
-          section_id: 'string',
-          section_name: 'string',
-          classroom: {
-            room_number: 'string',
-            building_name: 'string'
-          }
-        },
-        attendancePercentage: 'number',
-        teacher: {
-          name: 'string'
-        }
-      }],
-      weeklySchedule: 'object',
-      fetchedAt: 'timestamp'
-    }
+    description: 'Full student schedule and weekly planner',
+    requiredFields: ['enrolledSubjects', 'weeklySchedule']
+  },
+
+  // Dashboard Subjects: Lightweight subjects list for dashboard display
+  DASHBOARD_SUBJECTS: {
+    cacheKey: 'dashboardSubjects',
+    ttl: 1800000, // 30 minutes - Matches dashboard frequency
+    source: '/api/student/schedule (extracted)',
+    description: 'Lightweight subject list for dashboard cards',
+    requiredFields: ['subjects']
   },
 
   // Semester Subjects: Historical subject lists
@@ -190,6 +171,15 @@ export const DATA_SCHEMAS = {
     source: '/api/student/subjects',
     description: 'Historical semester subject list',
     requiredFields: ['semester', 'subjects']
+  },
+  
+  // Student Dashboard: Live classes and daily overview
+  STUDENT_DASHBOARD: {
+    cacheKey: 'studentDashboard',
+    ttl: 600000, // 10 minutes - live classes change
+    source: '/api/student/dashboard',
+    description: 'Current live classes and overall attendance overview',
+    requiredFields: ['student', 'todaySchedule', 'overallAttendance']
   }
 };
 

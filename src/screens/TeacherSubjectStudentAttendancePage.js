@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme';
 import Notification from '../components/Notification';
 import { useCache } from '../hooks/useCache';
-import { Student_Attendance_Report_API_ROUTES, AttendanceStatus_Update_API_ROUTES, BASE_URL } from '../lib/constants';
+import { Teacher_Attendance_Report_API_ROUTES, AttendanceStatus_Update_API_ROUTES, BASE_URL } from '../lib/constants';
 import { generateCalendarWeeks, getMonthName, formatDate, getDayName } from '../utils/calendarHelper';
 import { getAccessToken } from '../utils/tokenStorage';
 
@@ -73,7 +73,7 @@ export default function TeacherSubjectStudentAttendancePage({ route, navigation 
       setLoading(true);
       setError(null);
 
-      const apiUrl = `${Student_Attendance_Report_API_ROUTES.REPORT}?student_id=${student.id}&subject_id=${subject.subjectId}&month=${currentMonth + 1}&year=${currentYear}`;
+      const apiUrl = `${Teacher_Attendance_Report_API_ROUTES.REPORT}?student_id=${student.id}&subject_id=${subject.subjectId}&month=${currentMonth + 1}&year=${currentYear}`;
       const userToken = getAccessToken();
       
       console.log('📡 Fetching attendance data from:', apiUrl);

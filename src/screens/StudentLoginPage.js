@@ -27,6 +27,15 @@ export default function StudentLoginPage({ navigation, route }) {
         setError('Please enter your college email');
         return;
       }
+
+      // Email format validation (strictly @rvu.edu.in)
+      const emailRegex = /^[^\s@]+@rvu\.edu\.in$/;
+      if (!emailRegex.test(email)) {
+        console.log('Email validation failed - invalid domain');
+        setError('Please use your @rvu.edu.in email address');
+        return;
+      }
+
       if (!password || !password.trim()) {
         console.log('Password validation failed - empty password');
         setError('Please enter your password');

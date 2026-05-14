@@ -134,12 +134,12 @@ function RootNavigator() {
   }
 
   // Determine initial route based on auth status
-  const initialRouteName = isSignedIn 
+  const initialRouteName = isSignedIn
     ? (userRole?.toUpperCase() === 'STUDENT' ? 'StudentDashboardTabs' : 'TeacherDashboardTabs')
     : 'Opening';
 
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,

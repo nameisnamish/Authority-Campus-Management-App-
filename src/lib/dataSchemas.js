@@ -176,7 +176,7 @@ export const DATA_SCHEMAS = {
   // Student Dashboard: Live classes and daily overview
   STUDENT_DASHBOARD: {
     cacheKey: 'studentDashboard',
-    ttl: 600000, // 10 minutes - live classes change
+    ttl: 1200000, // 20 minutes - live classes change
     source: '/api/student/dashboard',
     description: 'Current live classes and overall attendance overview',
     requiredFields: ['student', 'todaySchedule', 'overallAttendance']

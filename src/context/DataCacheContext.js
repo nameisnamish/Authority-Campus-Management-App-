@@ -84,7 +84,6 @@ export function DataCacheProvider({ children }) {
     try {
       // Check if data exists in cache
       if (!(cacheKey in cache.data)) {
-        cache.stats.misses++;
         return null;
       }
 
@@ -101,10 +100,8 @@ export function DataCacheProvider({ children }) {
       // Check if cache has expired based on TTL
       const cachedAt = cache.timestamps[cacheKey];
       if (!isCacheValid(cachedAt, schema.ttl)) {
-        // Cache expired, remove it from memory AND disk
-        console.log(`🧹 Cache expired for ${cacheKey}, evicting...`);
-        invalidateCache(cacheKey);
-        cache.stats.misses++;
+        // We log but don't call invalidateCache here to avoid updating state during render
+        console.log(`🧹 Cache expired for ${cacheKey}, returning null`);
         return null;
       }
 
@@ -112,11 +109,9 @@ export function DataCacheProvider({ children }) {
       const cachedData = cache.data[cacheKey];
       if (!validateCacheData(cachedData, schema.requiredFields)) {
         console.warn(`Cached data invalid for: ${cacheKey}`);
-        invalidateCache(cacheKey);
         return null;
       }
 
-      cache.stats.hits++;
       return cachedData;
     } catch (error) {
       console.error('Error getting cached data:', error);

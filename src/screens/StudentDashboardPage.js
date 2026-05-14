@@ -251,6 +251,12 @@ export default function StudentDashboardPage({ navigation }) {
               fetchedAt: Date.now()
             });
 
+            // Tier 3: Cache Student Profile for the Profile Page
+            if (normalizedData.studentProfile) {
+              setCachedData(DATA_SCHEMAS.STUDENT_PROFILE.cacheKey, normalizedData.studentProfile);
+              console.log('✅ Student Profile cached for Profile Page');
+            }
+
             setSubjects(normalizedData.enrolledSubjects?.subjects || []);
             console.log('✅ Schedule cached (5m) & Dashboard Subjects cached (30m)');
           }

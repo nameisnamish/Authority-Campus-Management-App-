@@ -427,19 +427,38 @@ export default function TeacherDashboardPage({ navigation }) {
                   <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }] }}>
                     <Text style={styles.sectionTitle}>Upcoming Classes</Text>
                     {upcomingClasses.map((classItem, index) => (
-                      <View key={classItem.id} style={styles.upcomingCard}>
-                        <View style={styles.cardInfo}>
-                          <View style={styles.tagNext}>
-                            <Text style={styles.tagTextNext}>{index === 0 ? 'NEXT' : 'UPCOMING'}</Text>
+                      <View key={classItem.id} style={[styles.upcomingCard, { flexDirection: 'column', alignItems: 'stretch' }]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={styles.cardInfo}>
+                            <View style={styles.tagNext}>
+                              <Text style={styles.tagTextNext}>{index === 0 ? 'NEXT' : 'UPCOMING'}</Text>
+                            </View>
+                            <Text style={styles.courseTag}>{classItem.subjectCode}</Text>
+                            <Text style={styles.courseTitle}>{classItem.subjectName}</Text>
+                            <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
                           </View>
-                          <Text style={styles.courseTag}>{classItem.subjectCode}</Text>
-                          <Text style={styles.courseTitle}>{classItem.subjectName}</Text>
-                          <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
+                          <View style={styles.timeBox}>
+                            <Ionicons name="time-outline" size={18} color={colors.primaryPeach} />
+                            <Text style={styles.timeText}>{classItem.timings?.startLabel}</Text>
+                          </View>
                         </View>
-                        <View style={styles.timeBox}>
-                          <Ionicons name="time-outline" size={18} color={colors.primaryPeach} />
-                          <Text style={styles.timeText}>{classItem.timings?.startLabel}</Text>
-                        </View>
+
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => {
+                            navigation.navigate('ClassroomScan', {
+                              timetableId: classItem.id,
+                              subjectName: classItem.subjectName,
+                              batch: classItem.batch
+                            });
+                          }}
+                        >
+                          <View style={styles.actionButtonContent}>
+                            <Ionicons name="add-circle-outline" size={20} color={colors.darkOverlay} />
+                            <Text style={styles.actionButtonText}>Create Session</Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={18} color={colors.darkOverlay} />
+                        </TouchableOpacity>
                       </View>
                     ))}
                   </Animated.View>
@@ -451,21 +470,45 @@ export default function TeacherDashboardPage({ navigation }) {
                 {completedClasses.length > 0 ? (
                   <Animated.View style={{ opacity: listItemsFade, transform: [{ translateY: listItemsSlide }], marginTop: 8 }}>
                     {completedClasses.map((classItem) => (
-                      <View key={classItem.id} style={[styles.upcomingCard, styles.completedCard]}>
-                        <View style={styles.cardInfo}>
-                          <View style={styles.tagCompleted}>
-                            <Text style={styles.tagTextCompleted}>COMPLETED</Text>
+                      <View key={classItem.id} style={[styles.upcomingCard, styles.completedCard, { flexDirection: 'column', alignItems: 'stretch' }]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+                          <View style={styles.cardInfo}>
+                            <View style={styles.tagCompleted}>
+                              <Text style={styles.tagTextCompleted}>COMPLETED</Text>
+                            </View>
+                            <Text style={styles.courseTag}>{classItem.subjectCode}</Text>
+                            <Text style={styles.courseTitle}>{classItem.subjectName}</Text>
+                            <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
                           </View>
-                          <Text style={styles.courseTag}>{classItem.subjectCode}</Text>
-                          <Text style={styles.courseTitle}>{classItem.subjectName}</Text>
-                          <Text style={styles.courseSubtitle}>{classItem.section} • {classItem.room}</Text>
+                          <View style={[styles.timeBox, styles.timeBoxCompleted]}>
+                            <Ionicons name="checkmark-done-circle" size={18} color={colors.primaryGreen} />
+                            <Text style={[styles.timeText, styles.timeTextCompleted]}>
+                              {classItem.timings?.startLabel}
+                            </Text>
+                          </View>
                         </View>
-                        <View style={[styles.timeBox, styles.timeBoxCompleted]}>
-                          <Ionicons name="checkmark-done-circle" size={18} color={colors.primaryGreen} />
-                          <Text style={[styles.timeText, styles.timeTextCompleted]}>
-                            {classItem.timings?.startLabel}
-                          </Text>
-                        </View>
+
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => {
+                            console.log('🚀 Re-taking attendance for completed class:', {
+                              timetableId: classItem.id,
+                              subjectName: classItem.subjectName,
+                              batch: classItem.batch
+                            });
+                            navigation.navigate('ClassroomScan', {
+                              timetableId: classItem.id,
+                              subjectName: classItem.subjectName,
+                              batch: classItem.batch
+                            });
+                          }}
+                        >
+                          <View style={styles.actionButtonContent}>
+                            <Ionicons name="finger-print-outline" size={20} color={colors.darkOverlay} />
+                            <Text style={styles.actionButtonText}>Take Attendance</Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={18} color={colors.darkOverlay} />
+                        </TouchableOpacity>
                       </View>
                     ))}
                   </Animated.View>
@@ -1019,5 +1062,30 @@ const styles = StyleSheet.create({
     color: colors.textGrey,
     fontSize: 14,
     textAlign: 'center',
+  },
+  actionButton: {
+    backgroundColor: colors.primaryGreen,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
+    shadowColor: colors.primaryGreen,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: colors.darkOverlay,
+    fontSize: 14,
+    fontWeight: '800',
+    marginLeft: 10,
   },
 });
